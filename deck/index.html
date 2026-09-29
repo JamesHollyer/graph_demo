@@ -371,7 +371,7 @@ const SECTIONS = [
   {html:`<div class="eyebrow">6 · reflection</div><h2>What I'd do differently</h2>
     <ul><li><b>Recognize sooner when a requirement changes the architecture.</b> "Run in parallel" wasn't a feature. It was a different system. Treating it as a config tweak, one workflow per planner, cost a whole phase.</li><li><b>Keep the service single-purpose.</b> Say no to the UI-backend detour earlier, before it has users.</li><li><b>Design for the node dying.</b> A heartbeat on the operation row, and a reaper for stale ones, before the first stuck operation rather than after.</li></ul>`},
   {html:`<div class="eyebrow">6 · reflection</div><h2>What I learned</h2>
-    <ul><li><b>Give every run its own data and most concurrency problems never show up.</b> Once each run only read and wrote its own tagged worksets, there was nothing to lock and nothing to race.</li><li><b>Reach for the standard pattern, and know why.</b> Long-running operations are boring on purpose.</li><li><b>Turn repetition into data.</b> The moment tests became config, a whole UI became possible.</li><li><b>Build the general thing.</b> A service that runs any graph, not just fit checks, is why project two could plug into project one.</li></ul>`},
+    <ul><li><b>Reach for the standard pattern, and know why.</b> Long-running operations are boring on purpose.</li><li><b>Turn repetition into data.</b> The moment tests became config, a whole UI became possible.</li><li><b>Build the general thing.</b> A service that runs any graph, not just fit checks, is why project two could plug into project one.</li></ul>`},
 ]},
 
 { id:"firefly", n:"7", title:"Why Firefly", cx:3200, cy:-3300, cols:2, cards:[
