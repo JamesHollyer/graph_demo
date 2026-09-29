@@ -226,7 +226,7 @@ const SECTIONS = [
     </div>`},
   {html:`<div class="eyebrow">1 · about me</div><h2>My teams</h2>
     <div class="cols c3" style="align-items:stretch">
-      <div class="tile team"><img src="logos/austin-fc.svg" alt="Austin FC crest"><h3>Austin FC</h3><p>Verde y negro. The home team, and the reason I own a scarf in Texas.</p></div>
+      <div class="tile team"><img src="logos/austin-fc.svg" alt="Austin FC crest"><h3>Austin FC</h3><p>Listos Verde. The home team, and the reason I own a scarf in Texas.</p></div>
       <div class="tile team"><img src="logos/liverpool-fc.svg" alt="Liverpool FC crest"><h3>Liverpool FC</h3><p>Weekend mornings at odd hours. You'll never walk alone.</p></div>
       <div class="tile team"><img src="logos/green-bay-packers.svg" alt="Green Bay Packers logo"><h3>Green Bay Packers</h3><p>The only team you can own a share of. Go Pack Go.</p></div>
     </div>`},
@@ -371,7 +371,7 @@ const SECTIONS = [
   {html:`<div class="eyebrow">6 · reflection</div><h2>What I'd do differently</h2>
     <ul><li><b>Recognize sooner when a requirement changes the architecture.</b> "Run in parallel" wasn't a feature. It was a different system. Treating it as a config tweak, one workflow per planner, cost a whole phase.</li><li><b>Keep the service single-purpose.</b> Say no to the UI-backend detour earlier, before it has users.</li><li><b>Design for the node dying.</b> A heartbeat on the operation row, and a reaper for stale ones, before the first stuck operation rather than after.</li></ul>`},
   {html:`<div class="eyebrow">6 · reflection</div><h2>What I learned</h2>
-    <ul><li><b>Make the isolation property explicit.</b> Once every run owned its data, most of the hard concurrency questions disappeared.</li><li><b>Reach for the standard pattern, and know why.</b> Long-running operations are boring on purpose.</li><li><b>Turn repetition into data.</b> The moment tests became config, a whole UI became possible.</li><li><b>Build the general thing.</b> A service that runs any graph, not just fit checks, is why project two could plug into project one.</li></ul>`},
+    <ul><li><b>Give every run its own data and most concurrency problems never show up.</b> Once each run only read and wrote its own tagged worksets, there was nothing to lock and nothing to race.</li><li><b>Reach for the standard pattern, and know why.</b> Long-running operations are boring on purpose.</li><li><b>Turn repetition into data.</b> The moment tests became config, a whole UI became possible.</li><li><b>Build the general thing.</b> A service that runs any graph, not just fit checks, is why project two could plug into project one.</li></ul>`},
 ]},
 
 { id:"firefly", n:"7", title:"Why Firefly", cx:3200, cy:-3300, cols:2, cards:[
@@ -379,7 +379,7 @@ const SECTIONS = [
     <div class="cols c3">
       <div class="tile"><span class="tag grey">then</span><h3>Chrome</h3><p>The information age put the web in everyone's hands. I wanted to be part of the engine.</p></div>
       <div class="tile"><span class="tag grey">now</span><h3>Core ML</h3><p>AI is happening and it will change everything. I wanted to work on the tooling underneath it: TensorBoard, evaluation platforms, and now graph automation with an AI agent on top.</p></div>
-      <div class="tile blue"><span class="tag blue">next</span><h3>Space</h3><p>The next frontier and the next big problem. I want to help solve it.</p></div>
+      <div class="tile blue"><span class="tag blue">next</span><h3>Space</h3><p>The next frontier, and the most awe-inspiring one we have. The next big problem to solve, and I want to help solve it.</p></div>
     </div>`},
   {html:`<div class="eyebrow">7 · why firefly</div><h2>Why I want people out there</h2>
     <p class="big" style="font-size:36px;color:var(--muted)">"Awe is the feeling of being in the presence of something vast that transcends your current understanding of the world." <span style="font-size:22px;font-family:var(--mono);color:var(--faint)">Dacher Keltner</span></p>
