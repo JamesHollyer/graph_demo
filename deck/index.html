@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light dark}img{max-width:100%}[hidden]{display:none!important}.ph-gone{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:18px;text-align:center;padding:12px}
+</style>
+<title>Fit Checks On Demand</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#f3f5f8; --grid:#dfe5ec; --card:#ffffff; --card2:#f6f8fb; --line:#d3dae3;
+  --ink:#16202b; --muted:#5b6879; --faint:#93a0af;
+  --amber:#b9741c; --amber-bg:#fff4e3; --blue:#2e6f9e; --blue-bg:#e8f1f8;
+  --green:#2f8f5b; --green-bg:#e6f4ec; --red:#c2453d; --red-bg:#fbe9e7; --purple:#7a3fb5; --purple-bg:#f1e9fa;
+  --hud:#16202b; --hud-ink:#f3f5f8; --route:#c4ccd6;
+  --display:"Bricolage Grotesque","IBM Plex Sans",system-ui,sans-serif;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f151c; --grid:#1b232d; --card:#161d26; --card2:#1c242f; --line:#2a3440;
+    --ink:#e7ecf2; --muted:#9aa7b7; --faint:#667485;
+    --amber:#e0a252; --amber-bg:#2a2214; --blue:#6fa8d6; --blue-bg:#16273a;
+    --green:#5cc08a; --green-bg:#14291e; --red:#e5766c; --red-bg:#331b19; --purple:#b58ae0; --purple-bg:#271a36;
+    --hud:#e7ecf2; --hud-ink:#0f151c; --route:#2a3440;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f151c; --grid:#1b232d; --card:#161d26; --card2:#1c242f; --line:#2a3440;
+  --ink:#e7ecf2; --muted:#9aa7b7; --faint:#667485;
+  --amber:#e0a252; --amber-bg:#2a2214; --blue:#6fa8d6; --blue-bg:#16273a;
+  --green:#5cc08a; --green-bg:#14291e; --red:#e5766c; --red-bg:#331b19; --purple:#b58ae0; --purple-bg:#271a36;
+  --hud:#e7ecf2; --hud-ink:#0f151c; --route:#2a3440;
+}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);overflow:hidden}
+*{box-sizing:border-box}
+#viewport{position:fixed;inset:0;overflow:hidden;
+  background:radial-gradient(circle at 1px 1px,var(--grid) 1.2px,transparent 1.8px) 0 0/28px 28px,var(--bg)}
+#canvas{position:absolute;left:0;top:0;width:0;height:0}
+#canvas>*{position:absolute;left:0;top:0;transform-origin:0 0;transition:transform 1.05s cubic-bezier(.45,.02,.2,1)}
+#canvas.fast>*{transition-duration:.55s}
+#canvas.still>*{transition:none}
+@media (prefers-reduced-motion: reduce){#canvas>*{transition:none}}
+
+/* map-level furniture */
+.route{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
+.route path{fill:none;stroke:var(--route);stroke-width:14;stroke-dasharray:30 34;stroke-linecap:round}
+.region-label{position:absolute;font-family:var(--display);font-weight:700;font-size:150px;line-height:1;color:var(--faint);letter-spacing:-.02em;white-space:nowrap;pointer-events:none;opacity:.8}
+.region-label small{display:block;font-family:var(--mono);font-weight:500;font-size:64px;letter-spacing:.08em;color:var(--faint);margin-bottom:12px}
+
+/* cards */
+.card{position:absolute;width:1200px;height:680px;background:var(--card);border:2px solid var(--line);border-radius:22px;padding:52px 64px 40px;display:flex;flex-direction:column;gap:22px;box-shadow:0 30px 80px -40px rgba(0,0,0,.35)}
+.card.wide{width:2400px;height:1320px}
+.card.demo{width:1700px;height:980px;padding:0;overflow:hidden}
+.card.demo iframe{width:100%;height:100%;border:0;display:block;background:var(--card)}
+.card.demo .demo-fallback{position:absolute;right:20px;top:20px}
+.eyebrow{font-family:var(--mono);font-size:20px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.eyebrow b{color:var(--blue);font-weight:500}
+h1{font-family:var(--display);font-weight:700;font-size:112px;line-height:.98;letter-spacing:-.03em;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-weight:600;font-size:60px;line-height:1.02;letter-spacing:-.025em;margin:0;text-wrap:balance}
+h3{font-family:var(--display);font-weight:600;font-size:34px;line-height:1.1;margin:0;letter-spacing:-.01em}
+p{margin:0;font-size:29px;line-height:1.4;color:var(--ink)}
+p.lead{font-size:36px;line-height:1.3;color:var(--muted);max-width:26ch}
+p.big{font-family:var(--display);font-size:52px;font-weight:600;line-height:1.05;letter-spacing:-.02em}
+ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:14px}
+li{font-size:30px;line-height:1.35;padding-left:38px;position:relative}
+li::before{content:"";position:absolute;left:6px;top:.55em;width:12px;height:12px;border-radius:3px;background:var(--blue)}
+li b{font-weight:600}
+.cols{display:grid;gap:36px;flex:1;min-height:0;align-items:start}
+.cols.c2{grid-template-columns:1fr 1fr}.cols.c3{grid-template-columns:1fr 1fr 1fr}
+.cols.c21{grid-template-columns:1.3fr 1fr}
+.tile{background:var(--card2);border:1px solid var(--line);border-radius:16px;padding:24px 28px;display:flex;flex-direction:column;gap:10px}
+.tile h3{font-size:30px}
+.tile p{font-size:24px;line-height:1.35;color:var(--muted)}
+.tile.amber{border-color:var(--amber);background:var(--amber-bg)}.tile.blue{border-color:var(--blue);background:var(--blue-bg)}
+.tile.green{border-color:var(--green);background:var(--green-bg)}.tile.red{border-color:var(--red);background:var(--red-bg)}.tile.purple{border-color:var(--purple);background:var(--purple-bg)}
+.stat{display:flex;flex-direction:column;gap:4px}
+.stat .n{font-family:var(--display);font-size:84px;font-weight:700;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.stat .l{font-size:24px;color:var(--muted)}
+.tag{display:inline-block;font-family:var(--mono);font-size:20px;padding:4px 12px;border-radius:6px;border:1.5px solid;line-height:1.3}
+.tag.amber{color:var(--amber);border-color:var(--amber);background:var(--amber-bg)}.tag.blue{color:var(--blue);border-color:var(--blue);background:var(--blue-bg)}
+.tag.green{color:var(--green);border-color:var(--green);background:var(--green-bg)}.tag.red{color:var(--red);border-color:var(--red);background:var(--red-bg)}.tag.purple{color:var(--purple);border-color:var(--purple);background:var(--purple-bg)}
+.tag.grey{color:var(--muted);border-color:var(--line);background:var(--card2)}
+.mono{font-family:var(--mono)}
+pre{margin:0;font-family:var(--mono);font-size:23px;line-height:1.45;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:20px 24px;overflow:hidden;color:var(--ink)}
+pre .k{color:var(--blue)}pre .s{color:var(--amber)}pre .c{color:var(--faint)}
+table{border-collapse:collapse;width:100%;font-size:24px}
+th{text-align:left;font-weight:500;color:var(--muted);border-bottom:2px solid var(--line);padding:8px 14px 8px 0;font-size:21px;letter-spacing:.02em}
+td{padding:10px 14px 10px 0;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.3}
+td.mono,th.mono{font-family:var(--mono);font-size:22px}
+td.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono)}
+.foot{margin-top:auto;font-size:22px;color:var(--muted)}
+.ph{margin:0;border-radius:14px;overflow:hidden;background:var(--card2);border:1px solid var(--line);position:relative}
+.ph img{width:100%;height:100%;object-fit:contain;display:block}
+.ph.l{aspect-ratio:4/3}.ph.p{aspect-ratio:3/4}
+.prow{display:flex;gap:18px;align-items:stretch;min-height:0}
+.prow>.ph{height:100%;flex:none}
+.pcol{display:flex;flex-direction:column;gap:18px;min-height:0}
+.pcol>.ph{flex:none;height:calc(50% - 9px);align-self:flex-start}
+.pcol>.tile{flex:1}
+.pgrid{display:grid;grid-template-columns:290px 290px;grid-auto-rows:218px;gap:18px;align-content:start;flex:none}
+.pgrid>.ph{width:290px;height:218px}
+.ico{width:56px;height:56px;color:var(--ink);opacity:.9}
+.tile.blue .ico{color:var(--blue)}.tile.amber .ico{color:var(--amber)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}
+.chips .tag{font-size:18px;padding:3px 10px}
+.ph figcaption{position:absolute;left:0;right:0;bottom:0;padding:10px 16px;font-size:20px;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.65))}
+.photos{display:grid;gap:18px;flex:1;min-height:0}
+.photos .ph{min-height:0}
+.placeholder{color:var(--amber);border-bottom:2px dashed var(--amber)}
+
+/* progressive builds */
+.b{transition:opacity .35s,transform .35s}
+.b.hide{opacity:0;transform:translateY(10px)}
+@media (prefers-reduced-motion: reduce){.b{transition:none}.b.hide{transform:none}}
+
+/* flow / sequence graphics */
+.flow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.flow .box{border:2px solid var(--line);background:var(--card2);border-radius:12px;padding:14px 20px;font-family:var(--mono);font-size:22px;line-height:1.3}
+.flow .box.amber{border-color:var(--amber);background:var(--amber-bg)}.flow .box.blue{border-color:var(--blue);background:var(--blue-bg)}
+.flow .box.purple{border-color:var(--purple);background:var(--purple-bg)}.flow .box.green{border-color:var(--green);background:var(--green-bg)}
+.flow .arrow{color:var(--faint);font-size:30px}
+.seq{display:grid;grid-template-columns:auto 1fr;gap:10px 22px;font-size:25px;align-items:baseline}
+.seq .t{font-family:var(--mono);color:var(--muted);font-size:21px;white-space:nowrap}
+.seq .m{line-height:1.35}
+.seq .m code{font-family:var(--mono);font-size:22px;background:var(--card2);border:1px solid var(--line);border-radius:5px;padding:1px 7px}
+
+/* architecture diagram */
+.diagram{position:relative;flex:1}
+.diagram svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.diagram .box{position:absolute;border:2.5px solid var(--line);background:var(--card2);border-radius:16px;padding:18px 22px;display:flex;flex-direction:column;gap:6px}
+.diagram .box h4{margin:0;font-family:var(--display);font-size:30px;font-weight:600;line-height:1.1;letter-spacing:-.01em}
+.diagram .box p{font-size:21px;line-height:1.3;color:var(--muted)}
+.diagram .box.amber{border-color:var(--amber);background:var(--amber-bg)}.diagram .box.blue{border-color:var(--blue);background:var(--blue-bg)}
+.diagram .box.green{border-color:var(--green);background:var(--green-bg)}.diagram .box.purple{border-color:var(--purple);background:var(--purple-bg)}
+.diagram .box.grey{border-style:dashed}
+.diagram .box.mine{box-shadow:0 0 0 6px color-mix(in srgb,var(--blue) 25%,transparent)}
+.diagram .box .own{position:absolute;top:-16px;right:14px;font-family:var(--mono);font-size:17px;background:var(--blue);color:#fff;border-radius:6px;padding:2px 9px;letter-spacing:.06em}
+.diagram .arr{fill:none;stroke:var(--muted);stroke-width:3.5}
+.diagram .arr.dash{stroke-dasharray:10 9}
+.diagram .lbl{font-family:var(--mono);font-size:19px;fill:var(--muted)}
+.diagram .lbl-bg{fill:var(--card);stroke:var(--line);stroke-width:1.5;rx:6}
+
+/* HUD */
+.hud{position:fixed;left:0;right:0;bottom:0;display:flex;align-items:center;gap:12px;padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));pointer-events:none;font-size:13px;color:var(--muted);transition:opacity .4s}
+.hud.hidden-hud{opacity:0}
+.hud .where{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-family:var(--mono);font-size:12px;pointer-events:auto}
+.hud .spacer{flex:1}
+.hud .btns{display:flex;gap:6px;pointer-events:auto}
+.hud button{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:14px}
+.hud button:hover{background:var(--card2)}
+.hud button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.help{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:5}
+.help[hidden]{display:none}
+.help .panel{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:22px 26px;max-width:520px;width:calc(100% - 32px);font-size:14px;line-height:1.6}
+.help h3{font-size:18px;margin:0 0 10px}
+.help table{font-size:14px}.help td{padding:4px 10px 4px 0;border:0}
+kbd{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 6px;background:var(--card2)}
+.ph-gone{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:18px;text-align:center;padding:12px}
+</style>
+</head>
+<body>
+
+<div id="viewport"><div id="canvas"></div></div>
+
+<div class="hud" id="hud">
+  <span class="where" id="where">—</span>
+  <span class="spacer"></span>
+  <div class="btns">
+    <button id="bPrev" title="Previous (←)">‹</button>
+    <button id="bOver" title="Overview (O)">▦ map</button>
+    <button id="bNext" title="Next (→ or space)">›</button>
+    <button id="bHelp" title="Keys (?)">?</button>
+  </div>
+</div>
+
+<div class="help" id="help" hidden>
+  <div class="panel">
+    <h3>Driving the deck</h3>
+    <table>
+      <tr><td><kbd>→</kbd> <kbd>space</kbd></td><td>next step or next build</td></tr>
+      <tr><td><kbd>←</kbd></td><td>previous</td></tr>
+      <tr><td><kbd>O</kbd> <kbd>esc</kbd></td><td>zoom out to the map, again to return</td></tr>
+      <tr><td><kbd>1</kbd>–<kbd>7</kbd></td><td>jump to a section</td></tr>
+      <tr><td><kbd>T</kbd></td><td>light / dark</td></tr>
+      <tr><td><kbd>H</kbd></td><td>hide this bar</td></tr>
+      <tr><td><kbd>?</kbd></td><td>this help</td></tr>
+    </table>
+    <p style="margin:10px 0 0;font-size:13px;color:var(--muted)">Click anywhere to close.</p>
+  </div>
+</div>
+
+<script>
+/* ============ content ============ */
+const CW=1200, CH=680, GAPX=140, GAPY=130;
+const ph=(f,cap,o="l")=>`<figure class="ph ${o}"><span class="ph-gone">${cap}</span><figcaption>${cap}</figcaption></figure>`;
+
+const SECTIONS = [
+{ id:"title", n:"", title:"", cx:0, cy:-3700, cols:1, cards:[
+  {html:`<div class="eyebrow"><b>Firefly Aerospace</b> · onsite · software engineering</div>
+    <h1>Fit checks on&nbsp;demand</h1>
+    <p class="lead">Two projects on the same engine, and the moment they clicked together.</p>
+    <div class="foot">James Hollyer &nbsp;·&nbsp; <span class="mono">→ to begin · O for the map · ? for keys</span></div>`}
+]},
+
+{ id:"about", n:"1", title:"About me", cx:-5200, cy:-2600, cols:2, cards:[
+  {html:`<div class="eyebrow">1 · about me</div><h2>Dad of two, family of four</h2>
+    <div class="prow" style="height:392px">${ph("family-tahoe-trail.jpg","Desolation Wilderness","p")}${ph("family-alpine-lake.jpg","Alpine lake day","p")}${ph("kids-skiing.jpg","Passing it on","p")}</div>
+    <p>Kids are five and three. Our camper van is named <b>Cumulo</b>, and it goes wherever there's a trailhead.</p>`},
+  {html:`<div class="eyebrow">1 · about me</div><h2>Adventure is the default setting</h2>
+    <div class="prow" style="height:454px"><div class="pgrid">${ph("green-river-raft.jpg","Green River, Utah","l")}${ph("snowboard-gate.jpg","Backcountry gate, Tahoe","l")}${ph("canyon-sunset.jpg","Canyon country at sunset","l")}${ph("green-river-solo.jpg","Green River, day three","l")}</div>
+      <div class="pcol" style="flex:1; justify-content:center"><p class="big" style="font-size:44px">Backpacking. Kayaking. Camping. Snowboarding.</p><p style="color:var(--muted)">If it involves a trailhead, a put-in, or a lift line, I'm in.</p></div></div>`},
+  {html:`<div class="eyebrow">1 · about me</div><h2>Off the trail: a home lab and a lot of music</h2>
+    <div class="cols c2" style="align-items:stretch">
+      <div class="tile blue"><svg class="ico" viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="8" width="44" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="3"/><rect x="10" y="25" width="44" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="3"/><rect x="10" y="42" width="44" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="18" cy="15" r="2.5" fill="currentColor"/><circle cx="18" cy="32" r="2.5" fill="currentColor"/><circle cx="18" cy="49" r="2.5" fill="currentColor"/><rect x="30" y="13" width="18" height="4" rx="2" fill="currentColor"/><rect x="30" y="30" width="18" height="4" rx="2" fill="currentColor"/><rect x="30" y="47" width="18" height="4" rx="2" fill="currentColor"/></svg><h3>Home lab</h3><p>An Unraid box in the closet running a stack of Docker services: photo backup, security cameras, and the smart-home glue that ties the house together. Tinkering is the hobby; the uptime is the excuse.</p>
+        <div class="chips"><span class="tag blue">Unraid</span><span class="tag blue">Docker</span><span class="tag blue">Home Assistant</span><span class="tag blue">Frigate</span><span class="tag blue">Immich</span><span class="tag blue">Plex</span></div></div>
+      <div class="tile amber"><svg class="ico" viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="28" width="5" height="8" rx="2" fill="currentColor"/><rect x="14" y="20" width="5" height="24" rx="2" fill="currentColor"/><rect x="22" y="12" width="5" height="40" rx="2" fill="currentColor"/><rect x="30" y="22" width="5" height="20" rx="2" fill="currentColor"/><path d="M44 44V16l14-4v24" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="40" cy="45" r="5" fill="currentColor"/><circle cx="54" cy="41" r="5" fill="currentColor"/></svg><h3>Music</h3><p>Guitar, learning to produce, know my way around a DJ controller. Concerts and festivals whenever I can get there.</p>
+        <div class="chips"><span class="tag amber">guitar</span><span class="tag amber">production</span><span class="tag amber">DJ controller</span><span class="tag amber">festivals</span></div></div>
+    </div>`},
+  {html:`<div class="eyebrow">1 · about me</div><h2>The work so far</h2>
+    <div class="cols c3">
+      <div class="tile"><span class="tag grey">2009 – 2014</span><h3>Defense, while in school</h3><p>Booz Allen Hamilton: comptroller systems for the Naval Air Warfare Center, and GPS, radio, and weapons device simulators for an HMMWV test lab. B.S. Computer Science, UMBC, with math and physics minors.</p></div>
+      <div class="tile"><span class="tag grey">2014 – 2018</span><h3>Small teams, many stacks</h3><p>Consulting, a bioinformatics startup (an iOS health app over genomic and wearable data), and a voter-registration platform. Java, Swift, Node, Angular, Mongo.</p></div>
+      <div class="tile blue"><span class="tag blue">2018 – now · Google</span><h3>Chrome → Core ML → Delos</h3><p>Chrome device APIs in C++ (Bluetooth, USB, HID across four platforms). Then ML tooling with DeepMind: TensorBoard, Flatboard, Evalhub. Now capacity planning, where this story happens.</p></div>
+    </div>`},
+]},
+
+{ id:"engine", n:"2", title:"The engine", cx:-5200, cy:-300, cols:2, cards:[
+  {html:`<div class="eyebrow">2 · the engine · Delos</div><h2>Worksets: time series with a schema</h2>
+    <div class="cols c21"><div>
+    <table><tr><th class="mono">product</th><th class="mono">region</th><th class="mono num">wk1</th><th class="mono num">wk2</th><th class="mono num">wk3</th><th class="mono num">wk4</th></tr>
+    <tr><td class="mono">cpu-gen4</td><td class="mono">us-east1</td><td class="num">1200</td><td class="num">1400</td><td class="num">1600</td><td class="num">1800</td></tr>
+    <tr><td class="mono">gpu-x8</td><td class="mono">us-west2</td><td class="num">64</td><td class="num">64</td><td class="num">96</td><td class="num">128</td></tr>
+    <tr><td class="mono">cpu-gen4-hm</td><td class="mono">eu-west1</td><td class="num">300</td><td class="num">300</td><td class="num">300</td><td class="num">300</td></tr></table></div>
+    <ul><li><b>Named dimensions</b> describe each row: what, where.</li><li><b>One series per row</b>: quantity over time.</li><li>The schema is the contract between steps.</li></ul></div>
+    <p class="foot">Illustrative data. Real worksets hold thousands of rows.</p>`},
+  {html:`<div class="eyebrow">2 · the engine · Delos</div><h2>Process nodes turn worksets into worksets</h2>
+    <div class="flow" style="margin:10px 0"><span class="box amber">demand_by_region</span><span class="box amber">available_supply</span><span class="arrow">→</span><span class="box blue">fit</span><span class="arrow">→</span><span class="box amber">fit_result</span></div>
+    <ul><li><b>N worksets in, one workset out.</b> A node is a Python function over tables.</li><li>Chain nodes into a graph and you have an <b>automated business process</b>.</li><li>Any business process: forecasting, allocation, and the one in this talk, fit checks.</li></ul>`},
+  {html:`<div class="eyebrow">2 · the engine · Delos</div><h2>Every step is written down, forever</h2>
+    <ul><li>Every workset a run produces goes to the <b>record database</b>. Nothing is deleted.</li><li>Any number in a result <b>traces back</b> through every add, subtract, and join to the source data it came from.</li><li>When people make big decisions on a number, they can ask where it came from.</li>
+    <li class="b hide"><b>The cost:</b> persisting every step makes a run slow. Hold that thought, it comes back twice.</li></ul>`},
+  {html:`<div class="eyebrow">2 · the engine · Delos</div><h2>How it used to run</h2>
+    <div class="flow" style="margin:6px 0"><span class="box">cron · every morning</span><span class="arrow">→</span><span class="box">load the Delos package</span><span class="arrow">→</span><span class="box">run the graph</span><span class="arrow">→</span><span class="box">materialize a table</span></div>
+    <ul><li>A <b>Plx workflow</b>: a glorified cron job driving a Python script.</li><li>One run a day. One answer. Hours to complete.</li><li>Downstream nodes always read <b>"the latest"</b> version of a workset. There was no other way to ask.</li></ul>
+    <p class="foot">Two projects grew out of this setup. They didn't know about each other at first.</p>`},
+]},
+
+{ id:"service", n:"3", title:"Project one · fit checks on demand", cx:-1400, cy:2200, cols:4, cards:[
+  {html:`<div class="eyebrow">3 · project one · the problem</div><h2>The fit check</h2>
+    <p class="big">A customer wants N units of product X in region Y. Does it fit?</p>
+    <ul><li><b>Supply isn't one dataset.</b> Different products live in different supply stores, each with its own names for products and places. Mappings all the way down.</li><li><b>Fitting is layered.</b> Is there hardware? Is there allocation left to order it? Is there power to run it once it lands?</li><li>Every layer is its own hard problem. This project is about making the check <b>runnable</b>, not about the check itself.</li><li>Getting an answer for one customer <b>took about two weeks</b>.</li></ul>`},
+  {html:`<div class="eyebrow">3 · project one · the problem</div><h2>What planners actually needed</h2>
+    <div class="cols c2">
+      <div class="tile"><h3>Now</h3><p>A workload arrives, the planner needs an answer while the customer is still on the line.</p></div>
+      <div class="tile"><h3>In parallel</h3><p>Several planners, several demands, at the same time, without stepping on each other.</p></div>
+      <div class="tile"><h3>From anywhere</h3><p>Not a UI. Something any internal tool can call, including an LLM assistant.</p></div>
+      <div class="tile"><h3>Comparable</h3><p>Run the same demand again next week and see what changed.</p></div>
+    </div>`},
+  {wide:true, html:`<div class="eyebrow">3 · project one · technical</div><h2>The shape of it</h2><div class="diagram" id="arch"></div>`},
+  {html:`<div class="eyebrow">3 · project one · my role</div><h2>Which parts were mine</h2>
+    <div class="cols c2">
+      <div class="tile blue"><span class="tag blue">designed & built by me</span>
+        <ul style="margin-top:8px"><li>The workflow service, a generic runner built for fit checks first</li><li>The operations node and table</li><li>Run tagging inside the engine</li><li>The fit-check view in the graph UI</li></ul></div>
+      <div class="tile"><span class="tag grey">built by the team · used by me</span>
+        <ul style="margin-top:8px"><li>The Delos engine and its record database</li><li>The fit-check process graph itself</li><li>The engine's in-memory run mode</li></ul></div>
+    </div>`},
+  {html:`<div class="eyebrow">3 · project one · technical</div><h2>What made it hard</h2>
+    <div class="cols c3">
+      <div class="tile red b hide"><span class="tag red">collisions</span><h3>"Latest" is a race</h3><p>Every node reads the newest workset. Two runs at once overwrite each other mid-flight.</p></div>
+      <div class="tile red b hide"><span class="tag red">deadlines</span><h3>Runs outlive the call</h3><p>An RPC deadline is a few minutes. A run can take longer than that, and a caller can't just hold the line. They have to be able to leave and come back.</p></div>
+      <div class="tile red b hide"><span class="tag red">assumptions</span><h3>Built for one run a day</h3><p>The engine assumed a single run, from a script, on a schedule. Serving many callers at once had to be added without breaking the daily jobs.</p></div>
+    </div>
+    <p class="foot">The next few cards take these one at a time.</p>`},
+  {html:`<div class="eyebrow">3 · project one · technical</div><h2>Run tagging</h2>
+    <ul><li>Every run carries the <b>demand ID</b> from the demand tool, or one the caller supplies. Every workset it writes is tagged with that ID and a timestamp.</li><li>Downstream nodes read <b>their run's</b> data, not "the latest". Parallel runs stop colliding, with no locks, because runs never share data.</li>
+    <li class="b hide"><b>Deliberately not a UUID.</b> Nothing is overwritten, so run the same demand next month and you can diff the two.</li>
+    <li class="b hide"><b>Same ID twice at once?</b> Same inputs, same answer. Spanner guards the row writes. Not worth a lock.</li></ul>`},
+  {html:`<div class="eyebrow">3 · project one · technical</div><h2>Concurrency: a bounded thread pool</h2>
+    <ul><li>About <b>20 worker threads</b>. One mutex around dispatch, nothing else, because runs only touch their own tagged data.</li><li>Sized from Boq's free metrics: concurrent runs, saturation, CPU and memory. Pushed past 20 in testing and memory held; Borg scaled the service as needed.</li></ul>
+    <table style="margin-top:6px"><tr><th>Option</th><th>Good</th><th>Bad</th><th></th></tr>
+      <tr><td><b>Thread pool</b></td><td>Cheap, shared memory, simple</td><td>GIL: CPU-bound runs take turns; I/O-bound traceable runs overlap fine</td><td><span class="tag green">chosen</span></td></tr>
+      <tr><td><b>Process pool</b></td><td>True parallelism</td><td>More overhead: an interpreter per worker, inputs and results serialized across processes</td><td><span class="tag grey">if CPU-bound grows</span></td></tr>
+      <tr><td><b>Job per request</b></td><td>Full isolation, scales out</td><td>Startup latency, orchestration</td><td><span class="tag red">too heavy for ~5 users</span></td></tr>
+    </table>`},
+  {html:`<div class="eyebrow">3 · project one · technical</div><h2>Long-running operations</h2>
+    <div class="seq">
+      <span class="t">t=0</span><span class="m">Caller: <code>RunWorkflow(workflow, demand_id)</code>. Service creates a row in the <b>operations table</b>, hands the run to the pool, returns an <code>operation_id</code>.</span>
+      <span class="t">t=0…</span><span class="m">Caller: <code>WaitOperation(id)</code>. The operations node polls the table until just before its own deadline, then answers <code>done: false</code>.</span>
+      <span class="t">repeat</span><span class="m">Caller calls again immediately. No state on the connection, so any instance can answer.</span>
+      <span class="t">t=end</span><span class="m">Run finishes: <code>done: true</code>, metadata, run ID. Caller fetches any workset it wants with <code>GetWorkset(run_id, name)</code>.</span>
+    </div>
+    <p class="foot">The same long-running-operation pattern Google's public APIs use. Familiar to every caller.</p>`},
+  {html:`<div class="eyebrow">3 · project one · technical</div><h2>Why polling, not push</h2>
+    <div class="cols c2">
+      <div class="tile green"><h3>What it buys</h3><ul><li class="b hide">Callers only need to make RPCs. A callback means every caller must be a server.</li><li class="b hide">State lives in a table, so it survives deadlines, restarts, and load balancing.</li><li class="b hide">Resumable: crash, come back with the ID.</li></ul></div>
+      <div class="tile red"><h3>What it costs</h3><ul><li class="b hide">Latency up to one poll interval. Long-polling in <span class="mono">Wait</span> closes most of it.</li><li class="b hide">Table reads while waiting. Trivial at this scale.</li><li class="b hide">Push between Boq nodes was weak anyway.</li></ul></div>
+    </div>`},
+  {html:`<div class="eyebrow">3 · project one · technical</div><h2>When things fail</h2>
+    <ul><li>The run is wrapped: an exception writes the error into the operation, marks <span class="mono">done: true</span>, and the caller sees it on the next wait.</li><li>Progress updates are written sparingly: percent complete, worksets processed. Most callers just wait for done.</li>
+    <li class="b hide"><b>The hole I'd close first:</b> if the node itself dies mid-run, nothing runs the except. The operation sits at <span class="mono">done: false</span> forever.</li>
+    <li class="b hide"><b>The fix:</b> a heartbeat timestamp on the row, and a reaper that fails anything stale.</li></ul>`},
+  {html:`<div class="eyebrow">3 · project one · technical</div><h2>Two inputs, one door</h2>
+    <div class="cols c2">
+      <div class="tile amber"><h3>Pass a demand ID</h3><p>The service calls the demand tool, pulls the rows, and shapes them into a workset. What planners use.</p></div>
+      <div class="tile amber"><h3>Pass the demand inline</h3><p>"Can I fit a thousand of these in us-east1?" What the LLM assistant and ad-hoc tools use.</p></div>
+    </div>
+    <ul><li class="b hide"><b>Rejected:</b> a separate demand-extraction service. Cleaner on paper, but two calls for every caller and one more thing to keep alive.</li><li class="b hide"><b>Chosen:</b> the extractor is an internal layer. Invisible to callers, still separated in the code.</li></ul>`},
+  {html:`<div class="eyebrow">3 · project one · technical</div><h2>Quick or traceable: the user decides</h2>
+    <div class="cols c2">
+      <div class="tile green"><span class="tag green">in_memory: true</span><h3>Quick run</h3><p>Nothing persisted. Seconds. For what-ifs. Remember "persisting is slow"? This is the first payoff.</p></div>
+      <div class="tile blue"><span class="tag blue">in_memory: false</span><h3>Traceable run</h3><p>Every step recorded. Minutes. For numbers someone will act on.</p></div>
+    </div>
+    <p>I try to make trade-offs like this <b>a switch the user holds</b> rather than a decision I make for them once.</p>`},
+]},
+
+{ id:"testing", n:"4", title:"Project two · subgraph testing", cx:4200, cy:2000, cols:2, cards:[
+  {html:`<div class="eyebrow">4 · project two · the problem</div><h2>Zero tests ran a graph</h2>
+    <ul><li>Process nodes had their own unit tests. Nothing tested nodes <b>together</b>.</li><li>All the edge cases live between nodes: an unmapped site, a product with no supply row, a reservation bigger than supply.</li><li>What we wanted: <b>test any slice of a graph</b>, from these worksets to those, with this data.</li></ul>
+    <p class="foot">My role here is simple: I built all of it. Runner, config format, and the UI features you'll see.</p>`},
+  {html:`<div class="eyebrow">4 · project two · technical</div><h2>The subgraph runner</h2>
+    <div class="flow" style="margin:6px 0"><span class="box blue">start worksets + rows</span><span class="arrow">→</span><span class="box">extract the subgraph with the graph library</span><span class="arrow">→</span><span class="box green">run in memory</span><span class="arrow">→</span><span class="box purple">end worksets vs. expected</span></div>
+    <ul><li>Nothing is persisted, so a test is instant. "Persisting is slow", second payoff.</li><li>Every test quickly looked the same: name, start, data, end, expected.</li><li class="b hide">When every test has the same shape, it isn't code. It's <b>data</b>.</li></ul>`},
+  {html:`<div class="eyebrow">4 · project two · technical</div><h2>Tests became config</h2>
+    <div class="cols c21"><pre><span class="k">test</span> {
+  <span class="k">name</span>: <span class="s">"fit_partial_shortfall"</span>
+  <span class="k">description</span>: <span class="s">"Demand above supply is capped…"</span>
+  <span class="k">start</span> { <span class="k">workset</span>: <span class="s">"demand_by_region"</span> <span class="c">rows {…}</span> }
+  <span class="k">start</span> { <span class="k">workset</span>: <span class="s">"available_supply"</span> <span class="c">rows {…}</span> }
+  <span class="k">end</span>   { <span class="k">workset</span>: <span class="s">"shortfall_by_region"</span> <span class="c">rows {…}</span> }
+}</pre>
+    <ul><li>A textproto per test. Less boilerplate, sure.</li><li>The real win: <b>anything can read it</b>. Including the graph UI.</li></ul></div>`},
+  {html:`<div class="eyebrow">4 · project two · technical</div><h2>The UI reads them</h2>
+    <ul><li>The graph UI's backend has your <b>workspace</b> checked out, so it sees the test configs in your change.</li><li>Every node and workset inside a test's start-to-end range is <b>highlighted</b>. Gaps are visible at a glance.</li><li>Click a node: the tests that touch it. Hover a test: its start and end worksets. Click: its data and expected rows.</li><li>Editing a chain of nodes? You see which tests you're about to affect <b>before</b> you run anything.</li></ul>`},
+  {html:`<div class="eyebrow">4 · project two · technical</div><h2>The UI writes them</h2>
+    <ul><li><b>Add test:</b> click start worksets, click end worksets, fill in rows, and the backend writes the config into your workspace.</li><li>No hand-editing textproto. Coverage updates as you go.</li><li>Tests an AI wrote for you show up highlighted, so you review them on the graph rather than in a diff.</li>
+    <li class="b hide">Start and end are great. But when a test fails, you want to see the data <b>in the middle</b>. And the runner only runs on your machine.</li></ul>`},
+]},
+
+{ id:"meet", n:"5", title:"Where they meet", cx:1000, cy:-700, cols:2, cards:[
+  {html:`<div class="eyebrow">5 · where they meet</div><h2>Closing the loop</h2>
+    <p class="big">If only we had a service that could run any subgraph, in memory, and hand back every workset.</p>
+    <ul><li class="b hide">The workflow service grew <b>RunSubgraph</b>: entry points, exit points, input rows in. Every workset along the way out.</li><li class="b hide">The UI calls it and paints the result onto the graph.</li><li class="b hide">Run a test, click any node, see exactly what it held. <b>Debugging became looking at a picture.</b></li></ul>`},
+  {demo:true, html:`<iframe src="demo.html" title="Delos Graph test view demo" loading="lazy"></iframe><a class="tag blue demo-fallback" href="demo.html" target="_blank" rel="noopener">open demo in a tab ↗</a>`},
+]},
+
+{ id:"outcome", n:"6", title:"Outcome & reflection", cx:5200, cy:-1000, cols:2, cards:[
+  {html:`<div class="eyebrow">6 · outcome</div><h2>How it turned out</h2>
+    <div class="cols c3">
+      <div class="stat"><span class="n">2 wk → 10 min</span><span class="l">from customer ask to fit-check answer</span></div>
+      <div class="stat"><span class="n">0 → all</span><span class="l">process nodes covered by graph-level tests</span></div>
+      <div class="stat"><span class="n">~5</span><span class="l">planners running at once, comfortably</span></div>
+    </div>
+    <ul><li>It was never fit-check specific. It runs any Delos workflow, and <b>other business processes run through it today</b>, along with the graph UI and its LLM assistant.</li><li>Revenue impact is hard to isolate in a market where everyone wants every core. The planners' turnaround is not.</li></ul>`},
+  {html:`<div class="eyebrow">6 · reflection</div><h2>Scars</h2>
+    <ul><li><b>Attempt one was wrong.</b> I first gave each planner their own Plx workflow with a different tag baked in. Isolation, sort of. Tracking them was a nightmare. That pain is what made the service obvious.</li><li><b>The service grew a second job.</b> The graph UI needed a backend, the service was there, so it became one. None of that needed to be in Python. It eventually moved to its own service.</li></ul>`},
+  {html:`<div class="eyebrow">6 · reflection</div><h2>What I'd do differently</h2>
+    <ul><li><b>Recognize sooner when a requirement changes the architecture.</b> "Run in parallel" wasn't a feature. It was a different system. Treating it as a config tweak, one workflow per planner, cost a whole phase.</li><li><b>Keep the service single-purpose.</b> Say no to the UI-backend detour earlier, before it has users.</li><li><b>Design for the node dying.</b> A heartbeat on the operation row, and a reaper for stale ones, before the first stuck operation rather than after.</li></ul>`},
+  {html:`<div class="eyebrow">6 · reflection</div><h2>What I learned</h2>
+    <ul><li><b>Make the isolation property explicit.</b> Once every run owned its data, most of the hard concurrency questions disappeared.</li><li><b>Reach for the standard pattern, and know why.</b> Long-running operations are boring on purpose.</li><li><b>Turn repetition into data.</b> The moment tests became config, a whole UI became possible.</li><li><b>Build the general thing.</b> A service that runs any graph, not just fit checks, is why project two could plug into project one.</li></ul>`},
+]},
+
+{ id:"firefly", n:"7", title:"Why Firefly", cx:3200, cy:-3300, cols:2, cards:[
+  {html:`<div class="eyebrow">7 · why firefly</div><h2>I want to work on what pushes humanity forward</h2>
+    <div class="cols c3">
+      <div class="tile"><span class="tag grey">then</span><h3>Chrome</h3><p>The information age put the web in everyone's hands. I wanted to be part of the engine.</p></div>
+      <div class="tile"><span class="tag grey">now</span><h3>Core ML</h3><p>AI is happening and it will change everything. I wanted to work on the tooling underneath it: TensorBoard, evaluation platforms, and now graph automation with an AI agent on top.</p></div>
+      <div class="tile blue"><span class="tag blue">next</span><h3>Space</h3><p>The next frontier and the next big problem. I want to help solve it.</p></div>
+    </div>`},
+  {html:`<div class="eyebrow">7 · why firefly</div><h2>Why this company</h2>
+    <ul><li><b>The right size.</b> Not the headline company. Small enough that one engineer's decisions show up in the outcome, which is exactly what this talk was about.</li><li><b>Doing the amazing thing anyway.</b> First fully successful commercial soft landing on the Moon. More lunar missions on the manifest, and a Mars mission on the way.</li><li><b>A small flight-software group with real ownership</b> over high-reliability code. That's the room I want to be in.</li></ul>
+    <p class="big" style="margin-top:auto">Humanity is going back to the Moon and on to Mars. I want to be part of that push.</p>`},
+  {html:`<div class="eyebrow">that's the talk</div><h1 style="font-size:96px">Thank you.<br>Questions?</h1><p class="lead">Press O for the map and point me anywhere.</p><div class="foot">James Hollyer &nbsp;·&nbsp; j.c.hollyer@gmail.com</div>`},
+]},
+];
+
+/* ============ architecture diagram ============ */
+const ARCH = {
+  w:2272, h:1090,
+  boxes:[
+    {id:"tools",   x:0,   y:40,  w:340, h:130, cls:"grey",  h4:"Other internal tools", p:"any program that can make an RPC"},
+    {id:"ui",      x:0,   y:230, w:340, h:230, cls:"green", h4:"Delos Graph UI",       p:"planner fit checks · LLM assistant · graph and test view"},
+    {id:"uibe",    x:0,   y:530, w:340, h:150, cls:"green", h4:"UI backend",           p:"has your workspace checked out"},
+    {id:"cfg",     x:0,   y:880, w:340, h:130, cls:"green", h4:"Test configs",         p:"textproto in your workspace"},
+    {id:"svc",     x:660, y:40,  w:740, h:620, cls:"blue mine", h4:"Workflow service", p:"runs any Delos workflow · Python RPC · Boq node", own:"mine"},
+    {id:"rpc",     x:690, y:150, w:680, h:96,  cls:"",      h4:"RPC handlers",        p:"RunWorkflow → operation_id · RunSubgraph · GetWorkset"},
+    {id:"val",     x:690, y:270, w:325, h:120, cls:"",      h4:"Validation",          p:"shape and sanity of demand rows"},
+    {id:"ext",     x:1045,y:270, w:325, h:120, cls:"amber", h4:"Demand extractor",    p:"internal layer · demand_id → workset"},
+    {id:"pool",    x:690, y:415, w:680, h:96,  cls:"",      h4:"Thread pool · 20 workers", p:"one mutex on dispatch, nothing else"},
+    {id:"tagging", x:690, y:535, w:680, h:96,  cls:"",      h4:"Run tagging",         p:"every workset written under the run's demand_id"},
+    {id:"engine",  x:1600,y:60,  w:300, h:150, cls:"amber", h4:"Delos engine",        p:"Python package · runs the graph"},
+    {id:"db",      x:2000,y:60,  w:272, h:150, cls:"amber", h4:"Record database",     p:"tagged worksets · never deleted"},
+    {id:"demand",  x:1600,y:430, w:300, h:150, cls:"grey",  h4:"Demand tool",         p:"where planners enter demand"},
+    {id:"ops",     x:1600,y:880, w:300, h:150, cls:"purple mine", h4:"Operations node", p:"GetOperation · WaitOperation", own:"mine"},
+    {id:"opsdb",   x:2000,y:880, w:272, h:150, cls:"purple", h4:"Operations table",   p:"uuid · done · metadata · run id"},
+  ],
+  arrows:[
+    {from:"tools",to:"svc", label:"RunWorkflow", lx:500, ly:200},
+    {from:"ui",to:"svc", label:"RunWorkflow · RunSubgraph", at:.5},
+    {from:"ui",to:"uibe", pts:[[170,460],[170,530]]},
+    {from:"uibe",to:"cfg", pts:[[170,680],[170,880]], label:"read · write tests", lx:170, ly:780},
+    {from:"svc",to:"engine", label:"run the graph", lx:1500, ly:250},
+    {from:"engine",to:"db", label:"write every step", lx:1950, ly:26},
+    {from:"ext",to:"demand", pts:[[1370,330],[1600,505]], label:"demand by id", lx:1495, ly:395, dash:true},
+    {from:"svc",to:"opsdb", pts:[[1300,660],[1300,780],[2136,780],[2136,880]], label:"create · progress · done", lx:1720, ly:780},
+    {from:"ops",to:"opsdb", label:"poll", dash:true},
+    {from:"ui",to:"ops", pts:[[340,420],[480,420],[480,955],[1600,955]], label:"WaitOperation(id) → done?", lx:1040, ly:955, dash:true},
+  ]
+};
+function renderArch(host){
+  host.innerHTML="";
+  const boxes=Object.fromEntries(ARCH.boxes.map(b=>[b.id,b]));
+  const frag=document.createDocumentFragment();
+  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg"); svg.setAttribute("viewBox",`0 0 ${ARCH.w} ${ARCH.h}`); svg.setAttribute("preserveAspectRatio","none");
+  svg.innerHTML=`<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5 0 10z" fill="var(--muted)"/></marker></defs>`;
+  const R=(b,s)=>({l:[b.x,b.y+b.h/2], r:[b.x+b.w,b.y+b.h/2], t:[b.x+b.w/2,b.y], b:[b.x+b.w/2,b.y+b.h]});
+  ARCH.arrows.forEach(a=>{
+    const A=boxes[a.from], B=boxes[a.to]; let d, lx, ly;
+    if(a.pts){ d="M"+a.pts.map(p=>p.join(" ")).join(" L"); lx=a.lx; ly=a.ly; }
+    else { const p1=R(A).r, p2=R(B).l; const c=(p2[0]-p1[0])/2; d=`M${p1[0]} ${p1[1]} C${p1[0]+c} ${p1[1]} ${p2[0]-c} ${p2[1]} ${p2[0]} ${p2[1]}`; const t=a.at??.5; lx=p1[0]+(p2[0]-p1[0])*t; ly=p1[1]+(p2[1]-p1[1])*t; if(a.lx!=null){lx=a.lx; ly=a.ly;} }
+    const p=document.createElementNS("http://www.w3.org/2000/svg","path"); p.setAttribute("d",d); p.setAttribute("class","arr"+(a.dash?" dash":"")); p.setAttribute("marker-end","url(#ah)"); svg.appendChild(p);
+    if(a.label){ const w=a.label.length*11.2+24; const g=document.createElementNS("http://www.w3.org/2000/svg","g");
+      g.innerHTML=`<rect class="lbl-bg" x="${lx-w/2}" y="${ly-17}" width="${w}" height="34"/><text class="lbl" x="${lx}" y="${ly+6}" text-anchor="middle">${a.label}</text>`; svg.appendChild(g); }
+  });
+  host.appendChild(svg);
+  ARCH.boxes.forEach(b=>{ const d=document.createElement("div"); d.className="box "+b.cls; d.style.cssText=`left:${b.x/ARCH.w*100}%;top:${b.y/ARCH.h*100}%;width:${b.w/ARCH.w*100}%;height:${b.h/ARCH.h*100}%`;
+    d.innerHTML=`${b.own?`<span class="own">${b.own}</span>`:""}<h4>${b.h4}</h4><p>${b.p}</p>`; host.appendChild(d); });
+}
+
+/* ============ layout ============ */
+const canvas=document.getElementById("canvas");
+const STEPS=[]; const SECTION_START={};
+const routePts=[];
+SECTIONS.forEach(sec=>{
+  const cards=sec.cards; const cols=sec.cols;
+  // measure grid
+  const sizes=cards.map(c=>c.wide?{w:2400,h:1320}:c.demo?{w:1700,h:980}:{w:CW,h:CH});
+  // simple row packing: wide cards take a full row
+  const rows=[]; let row=[]; cards.forEach((c,i)=>{ if(c.wide){ if(row.length) rows.push(row); rows.push([i]); row=[]; } else { row.push(i); if(row.length===cols){rows.push(row); row=[];} } }); if(row.length) rows.push(row);
+  const rowH=rows.map(r=>Math.max(...r.map(i=>sizes[i].h))); const totalH=rowH.reduce((s,h)=>s+h,0)+GAPY*(rows.length-1);
+  let y=sec.cy-totalH/2; let minx=Infinity,maxx=-Infinity;
+  const placed=[];
+  rows.forEach((r,ri)=>{ const rw=r.reduce((s,i)=>s+sizes[i].w,0)+GAPX*(r.length-1); let x=sec.cx-rw/2;
+    r.forEach(i=>{ const s=sizes[i]; placed[i]={x:x+s.w/2, y:y+rowH[ri]/2, w:s.w, h:s.h}; minx=Math.min(minx,x); maxx=Math.max(maxx,x+s.w); x+=s.w+GAPX; }); y+=rowH[ri]+GAPY; });
+  const bbox={x:(minx+maxx)/2, y:sec.cy, w:(maxx-minx)+300, h:totalH+420};
+  if(sec.n){ const lab=document.createElement("div"); lab.className="region-label"; lab.innerHTML=`<small>SECTION ${sec.n}</small>${sec.title}`; lab.dataset.px=minx; lab.dataset.py=sec.cy-totalH/2-300; canvas.appendChild(lab);
+    SECTION_START[sec.n]=STEPS.length; STEPS.push({sec, view:true, ...bbox, name:sec.title}); routePts.push([sec.cx,sec.cy]); }
+  else routePts.push([sec.cx,sec.cy]);
+  cards.forEach((c,i)=>{ const p=placed[i]; const el=document.createElement("div"); el.className="card"+(c.wide?" wide":"")+(c.demo?" demo":""); el.dataset.px=p.x-p.w/2; el.dataset.py=p.y-p.h/2; el.innerHTML=c.html; canvas.appendChild(el);
+    STEPS.push({sec, el, x:p.x, y:p.y, w:p.w+80, h:p.h+80, name:sec.title||"Title"}); });
+});
+renderArch(document.getElementById("arch"));
+// route line through sections (map furniture, drawn under cards)
+const route=document.createElementNS("http://www.w3.org/2000/svg","svg"); route.setAttribute("class","route"); route.setAttribute("width","1"); route.setAttribute("height","1"); route.dataset.px=0; route.dataset.py=0;
+route.innerHTML=`<path d="M${routePts.map(p=>p.join(" ")).join(" L")}"/>`; canvas.insertBefore(route, canvas.firstChild);
+const ALL=STEPS.reduce((b,s)=>({x0:Math.min(b.x0,s.x-s.w/2),y0:Math.min(b.y0,s.y-s.h/2),x1:Math.max(b.x1,s.x+s.w/2),y1:Math.max(b.y1,s.y+s.h/2)}),{x0:1e9,y0:1e9,x1:-1e9,y1:-1e9});
+const OVERVIEW={x:(ALL.x0+ALL.x1)/2, y:(ALL.y0+ALL.y1)/2, w:(ALL.x1-ALL.x0)+600, h:(ALL.y1-ALL.y0)+700, name:"Map"};
+
+/* ============ camera ============ */
+let cur=0, inOverview=false;
+function camera(s){ const vw=innerWidth, vh=innerHeight; const k=Math.min(vw/s.w, vh/s.h); for(const el of canvas.children){ const px=+el.dataset.px||0, py=+el.dataset.py||0; el.style.transform=`translate(${(px-s.x)*k+vw/2}px, ${(py-s.y)*k+vh/2}px) scale(${k})`; } }
+function builds(step){ return step.el ? [...step.el.querySelectorAll(".b")] : []; }
+function go(i, opts={}){
+  i=Math.max(0,Math.min(STEPS.length-1,i)); const dir=opts.dir||0; const prev=STEPS[cur];
+  if(dir>0 && prev.el) builds(prev).forEach(b=>b.classList.remove("hide"));
+  cur=i; inOverview=false; const s=STEPS[cur];
+  if(dir>=0 && !opts.keep) builds(s).forEach(b=>b.classList.add("hide")); if(dir<0) builds(s).forEach(b=>b.classList.remove("hide"));
+  canvas.classList.toggle("fast", !!opts.fast); camera(s); hud(); history.replaceState(null,"","#"+(cur+1));
+}
+function next(){ if(inOverview){ go(cur,{keep:true}); return; } const hb=builds(STEPS[cur]).find(b=>b.classList.contains("hide")); if(hb){ hb.classList.remove("hide"); return; } if(cur<STEPS.length-1) go(cur+1,{dir:1}); }
+function prevStep(){ if(inOverview){ go(cur,{keep:true}); return; } const shown=builds(STEPS[cur]).filter(b=>!b.classList.contains("hide")); if(shown.length){ shown[shown.length-1].classList.add("hide"); return; } if(cur>0) go(cur-1,{dir:-1}); }
+function overview(){ if(inOverview){ go(cur,{keep:true}); return; } inOverview=true; camera(OVERVIEW); hud(); }
+function hud(){ const s=STEPS[cur]; const secIdx=STEPS.slice(0,cur+1).filter(x=>x.view).length; document.getElementById("where").textContent = inOverview ? "map · press → to return" : `${s.name}${s.view?" · section":""} · ${cur+1}/${STEPS.length}`; }
+document.getElementById("bPrev").onclick=prevStep; document.getElementById("bNext").onclick=next; document.getElementById("bOver").onclick=overview;
+document.getElementById("bHelp").onclick=()=>{document.getElementById("help").hidden=false;};
+document.getElementById("help").onclick=()=>{document.getElementById("help").hidden=true;};
+document.addEventListener("keydown",e=>{
+  if(e.target.matches("input,textarea") || e.metaKey || e.ctrlKey || e.altKey) return;
+  const k=e.key;
+  if(k==="ArrowRight"||k===" "||k==="PageDown"||k==="Enter"||k==="ArrowDown"){e.preventDefault(); next();}
+  else if(k==="ArrowLeft"||k==="PageUp"||k==="ArrowUp"){e.preventDefault(); prevStep();}
+  else if(k==="o"||k==="O"||k==="Escape"){ if(!document.getElementById("help").hidden){document.getElementById("help").hidden=true;return;} overview(); }
+  else if(k==="?"){ const h=document.getElementById("help"); h.hidden=!h.hidden; }
+  else if(k==="h"||k==="H"){ document.getElementById("hud").classList.toggle("hidden-hud"); }
+  else if(k==="t"||k==="T"){ const r=document.documentElement; const dark=r.dataset.theme==="dark" || (!r.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches); r.dataset.theme=dark?"light":"dark"; }
+  else if(k==="Home"){ go(0); } else if(k==="End"){ go(STEPS.length-1,{dir:1}); }
+  else if(/^[1-7]$/.test(k) && SECTION_START[k]!=null){ go(SECTION_START[k],{fast:true}); }
+});
+// click a card on the map to jump to it
+canvas.addEventListener("click",e=>{ if(!inOverview) return; const el=e.target.closest(".card"); if(!el) return; const i=STEPS.findIndex(s=>s.el===el); if(i>=0) go(i,{keep:true}); });
+addEventListener("resize",()=>{ inOverview?camera(OVERVIEW):camera(STEPS[cur]); });
+// boot: start on the map, then settle on the title so the first frame shows the whole thing
+canvas.classList.add("still");
+const h0=parseInt(location.hash.slice(1),10);
+if(h0>=1 && h0<=STEPS.length){ go(h0-1,{keep:true}); builds(STEPS[cur]).forEach(b=>b.classList.remove("hide")); } else { camera(OVERVIEW); inOverview=true; hud(); }
+requestAnimationFrame(()=>requestAnimationFrame(()=>{ canvas.classList.remove("still"); }));
+</script>
+</body>
+</html>
