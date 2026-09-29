@@ -107,6 +107,9 @@ td.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono
 .tile.blue .ico{color:var(--blue)}.tile.amber .ico{color:var(--amber)}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}
 .chips .tag{font-size:18px;padding:3px 10px}
+.tile.team{align-items:center;text-align:center;gap:14px;padding-top:32px}
+.tile.team img{width:200px;height:200px;object-fit:contain}
+.tile.team p{font-size:22px}
 .ph figcaption{position:absolute;left:0;right:0;bottom:0;padding:10px 16px;font-size:20px;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.65))}
 .photos{display:grid;gap:18px;flex:1;min-height:0}
 .photos .ph{min-height:0}
@@ -219,6 +222,12 @@ const SECTIONS = [
         <div class="chips"><span class="tag blue">Unraid</span><span class="tag blue">Docker</span><span class="tag blue">Home Assistant</span><span class="tag blue">Frigate</span><span class="tag blue">Immich</span><span class="tag blue">Plex</span></div></div>
       <div class="tile amber"><svg class="ico" viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="28" width="5" height="8" rx="2" fill="currentColor"/><rect x="14" y="20" width="5" height="24" rx="2" fill="currentColor"/><rect x="22" y="12" width="5" height="40" rx="2" fill="currentColor"/><rect x="30" y="22" width="5" height="20" rx="2" fill="currentColor"/><path d="M44 44V16l14-4v24" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="40" cy="45" r="5" fill="currentColor"/><circle cx="54" cy="41" r="5" fill="currentColor"/></svg><h3>Music</h3><p>Guitar, learning to produce, know my way around a DJ controller. Concerts and festivals whenever I can get there.</p>
         <div class="chips"><span class="tag amber">guitar</span><span class="tag amber">production</span><span class="tag amber">DJ controller</span><span class="tag amber">festivals</span></div></div>
+    </div>`},
+  {html:`<div class="eyebrow">1 · about me</div><h2>I don't watch much sport. I do have teams.</h2>
+    <div class="cols c3" style="align-items:stretch">
+      <div class="tile team"><img src="logos/austin-fc.svg" alt="Austin FC crest"><h3>Austin FC</h3><p>Verde y negro. The home team, and the reason I own a scarf in Texas.</p></div>
+      <div class="tile team"><img src="logos/liverpool-fc.svg" alt="Liverpool FC crest"><h3>Liverpool FC</h3><p>Weekend mornings at odd hours. You'll never walk alone.</p></div>
+      <div class="tile team"><img src="logos/green-bay-packers.svg" alt="Green Bay Packers logo"><h3>Green Bay Packers</h3><p>The only team you can own a share of. Go Pack Go.</p></div>
     </div>`},
   {html:`<div class="eyebrow">1 · about me</div><h2>The work so far</h2>
     <div class="cols c3">
