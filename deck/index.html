@@ -312,12 +312,13 @@ const SECTIONS = [
     <ul><li>The run is wrapped: an exception writes the error into the operation, marks <span class="mono">done: true</span>, and the caller sees it on the next wait.</li><li>Progress updates are written sparingly: percent complete, worksets processed. Most callers just wait for done.</li>
     <li class="b hide"><b>The hole I'd close first:</b> if the node itself dies mid-run, nothing runs the except. The operation sits at <span class="mono">done: false</span> forever.</li>
     <li class="b hide"><b>The fix:</b> a heartbeat timestamp on the row, and a reaper that fails anything stale.</li></ul>`},
-  {html:`<div class="eyebrow">3 · project one · technical</div><h2>Two inputs, one door</h2>
-    <div class="cols c2">
-      <div class="tile amber"><h3>Pass a demand ID</h3><p>The service calls the demand tool, pulls the rows, and shapes them into a workset. What planners use.</p></div>
-      <div class="tile amber"><h3>Pass the demand inline</h3><p>"Can I fit a thousand of these in us-east1?" What the LLM assistant and ad-hoc tools use.</p></div>
+  {html:`<div class="eyebrow">3 · project one · technical</div><h2>Three inputs, one door</h2>
+    <div class="cols c3">
+      <div class="tile amber"><h3>A demand ID</h3><p>The service calls the demand tool, pulls the rows, and shapes them into a workset. What planners use day to day.</p></div>
+      <div class="tile amber"><h3>A spreadsheet URL</h3><p>A sheet that follows a template we built. For demand that doesn't live in the tool yet.</p></div>
+      <div class="tile amber"><h3>Demand inline</h3><p>"Can I fit a thousand of these in us-east1?" What the LLM assistant and ad-hoc tools use.</p></div>
     </div>
-    <ul><li class="b hide"><b>Rejected:</b> a separate demand-extraction service. Cleaner on paper, but two calls for every caller and one more thing to keep alive.</li><li class="b hide"><b>Chosen:</b> the extractor is an internal layer. Invisible to callers, still separated in the code.</li></ul>`},
+    <ul><li class="b hide"><b>Rejected:</b> a separate demand-extraction service. Cleaner on paper, but two calls for every caller and one more thing to keep alive.</li><li class="b hide"><b>Chosen:</b> the extractor is an internal layer. Callers pick a source; the service does the rest.</li></ul>`},
   {html:`<div class="eyebrow">3 · project one · technical</div><h2>Quick or traceable: the user decides</h2>
     <div class="cols c2">
       <div class="tile green"><span class="tag green">in_memory: true</span><h3>Quick run</h3><p>Nothing persisted. Seconds. For what-ifs. Remember "persisting is slow"? This is the first payoff.</p></div>
@@ -397,7 +398,7 @@ const ARCH = {
     {id:"svc",     x:660, y:40,  w:740, h:620, cls:"blue mine", h4:"Workflow service", p:"runs any Delos workflow · Python RPC · Boq node", own:"mine"},
     {id:"rpc",     x:690, y:150, w:680, h:96,  cls:"",      h4:"RPC handlers",        p:"RunWorkflow → operation_id · RunSubgraph · GetWorkset"},
     {id:"val",     x:690, y:270, w:325, h:120, cls:"",      h4:"Validation",          p:"shape and sanity of demand rows"},
-    {id:"ext",     x:1045,y:270, w:325, h:120, cls:"amber", h4:"Demand extractor",    p:"internal layer · demand_id → workset"},
+    {id:"ext",     x:1045,y:270, w:325, h:120, cls:"amber", h4:"Demand extractor",    p:"demand_id · spreadsheet · rows → workset"},
     {id:"pool",    x:690, y:415, w:680, h:96,  cls:"",      h4:"Thread pool · 20 workers", p:"one mutex on dispatch, nothing else"},
     {id:"tagging", x:690, y:535, w:680, h:96,  cls:"",      h4:"Run tagging",         p:"every workset written under the run's demand_id"},
     {id:"engine",  x:1600,y:60,  w:300, h:150, cls:"amber", h4:"Delos engine",        p:"Python package · runs the graph"},
