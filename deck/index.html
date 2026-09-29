@@ -75,6 +75,7 @@ li b{font-weight:600}
 .tile{background:var(--card2);border:1px solid var(--line);border-radius:16px;padding:24px 28px;display:flex;flex-direction:column;gap:10px}
 .tile h3{font-size:30px}
 .tile p{font-size:24px;line-height:1.35;color:var(--muted)}
+.cols[style*="font-size"] .tile p{font-size:inherit}
 .tile.amber{border-color:var(--amber);background:var(--amber-bg)}.tile.blue{border-color:var(--blue);background:var(--blue-bg)}
 .tile.green{border-color:var(--green);background:var(--green-bg)}.tile.red{border-color:var(--red);background:var(--red-bg)}.tile.purple{border-color:var(--purple);background:var(--purple-bg)}
 .stat{display:flex;flex-direction:column;gap:4px}
@@ -230,7 +231,7 @@ const SECTIONS = [
       <div class="tile team"><img src="logos/green-bay-packers.svg" alt="Green Bay Packers logo"><h3>Green Bay Packers</h3><p>The only team you can own a share of. Go Pack Go.</p></div>
     </div>`},
   {html:`<div class="eyebrow">1 · about me</div><h2>The work so far</h2>
-    <div class="cols c3">
+    <div class="cols c3" style="font-size:23px">
       <div class="tile"><span class="tag grey">2009 – 2014</span><h3>Defense, while in school</h3><p>Booz Allen Hamilton: comptroller systems for the Naval Air Warfare Center, and GPS, radio, and weapons device simulators for an HMMWV test lab. B.S. Computer Science, UMBC, with math and physics minors.</p></div>
       <div class="tile"><span class="tag grey">2014 – 2018</span><h3>Small teams, many stacks</h3><p>Consulting, a bioinformatics startup (an iOS health app over genomic and wearable data), and a voter-registration platform. Java, Swift, Node, Angular, Mongo.</p></div>
       <div class="tile blue"><span class="tag blue">2018 – now · Google</span><h3>Chrome → Core ML → Delos</h3><p>Chrome device APIs in C++ (Bluetooth, USB, HID across four platforms). Then ML tooling with DeepMind: TensorBoard, Flatboard, Evalhub. Now capacity planning, where this story happens.</p></div>
