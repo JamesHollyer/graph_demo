@@ -287,7 +287,7 @@ const SECTIONS = [
   {html:`<div class="eyebrow">3 · project one · technical</div><h2>Run tagging</h2>
     <ul><li>Every run carries the <b>demand ID</b> from the demand tool, or one the caller supplies. Every workset it writes is tagged with that ID and a timestamp.</li><li>Downstream nodes read <b>their run's</b> data, not "the latest". Parallel runs stop colliding, with no locks, because runs never share data.</li>
     <li class="b hide"><b>Deliberately not a UUID.</b> Nothing is overwritten, so run the same demand next month and you can diff the two.</li>
-    <li class="b hide"><b>Same ID twice at once?</b> Same inputs, same answer. Spanner guards the row writes. Not worth a lock.</li></ul>`},
+    <li class="b hide"><b>Same ID twice at once?</b> From the demand tool, safe: same ID means same inputs, same answer, and Spanner guards the row writes. With <b>inline demand under a reused ID</b>, two runs could read each other's rows. Hasn't happened. A per-ID lock is the fix when it does.</li></ul>`},
   {html:`<div class="eyebrow">3 · project one · technical</div><h2>Concurrency: a bounded thread pool</h2>
     <ul><li>About <b>20 worker threads</b>. One mutex around dispatch, nothing else, because runs only touch their own tagged data.</li><li>Sized from Boq's free metrics: concurrent runs, saturation, CPU and memory. Pushed past 20 in testing and memory held; Borg scaled the service as needed.</li></ul>
     <table style="margin-top:6px"><tr><th>Option</th><th>Good</th><th>Bad</th><th></th></tr>
