@@ -54,6 +54,9 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);over
 /* cards */
 .card{position:absolute;width:1200px;height:680px;background:var(--card);border:2px solid var(--line);border-radius:22px;padding:52px 64px 40px;display:flex;flex-direction:column;gap:22px;box-shadow:0 30px 80px -40px rgba(0,0,0,.35)}
 .card.wide{width:2400px;height:1320px}
+.card.opt{border-style:dashed;opacity:.6}
+.card.opt.cur{opacity:1}
+.card.opt::after{content:"backup";position:absolute;top:20px;right:24px;font-family:var(--mono);font-size:18px;letter-spacing:.06em;color:var(--faint);border:1.5px solid var(--line);border-radius:6px;padding:2px 10px}
 .card.demo{width:1700px;height:980px;padding:0;overflow:hidden}
 .card.demo iframe{width:100%;height:100%;border:0;display:block;background:var(--card)}
 .card.demo .demo-fallback{position:absolute;right:20px;top:20px}
@@ -185,9 +188,9 @@ kbd{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-b
   <div class="panel">
     <h3>Driving the deck</h3>
     <table>
-      <tr><td><kbd>→</kbd> <kbd>space</kbd></td><td>next step or next build</td></tr>
+      <tr><td><kbd>→</kbd> <kbd>space</kbd></td><td>next step or next build (skips backup cards)</td></tr>
       <tr><td><kbd>←</kbd></td><td>previous</td></tr>
-      <tr><td><kbd>O</kbd> <kbd>esc</kbd></td><td>zoom out to the map, again to return</td></tr>
+      <tr><td><kbd>O</kbd> <kbd>esc</kbd></td><td>zoom out to the map, again to return. Click any card, backup ones too.</td></tr>
       <tr><td><kbd>1</kbd>–<kbd>7</kbd></td><td>jump to a section</td></tr>
       <tr><td><kbd>T</kbd></td><td>light / dark</td></tr>
       <tr><td><kbd>H</kbd></td><td>hide this bar</td></tr>
@@ -215,8 +218,8 @@ const SECTIONS = [
     <div class="prow" style="height:392px">${ph("family-tahoe-trail.jpg","Desolation Wilderness","p")}${ph("family-alpine-lake.jpg","Alpine lake day","p")}${ph("kids-skiing.jpg","Passing it on","p")}</div>
     <p>Kids are five and three. Our camper van is named <b>Cumulo</b>, and it goes wherever there's a trailhead.</p>`},
   {html:`<div class="eyebrow">1 · about me</div><h2>Adventure is the default setting</h2>
-    <div class="prow" style="height:454px"><div class="pgrid">${ph("green-river-raft.jpg","Green River, Utah","l")}${ph("snowboard-gate.jpg","Backcountry gate, Tahoe","l")}${ph("canyon-sunset.jpg","Canyon country at sunset","l")}${ph("green-river-solo.jpg","Green River, day three","l")}</div>
-      <div class="pcol" style="flex:1; justify-content:center"><p class="big" style="font-size:44px">Backpacking. Kayaking. Camping. Snowboarding.</p><p style="color:var(--muted)">If it involves a trailhead, a put-in, or a lift line, I'm in.</p></div></div>`},
+    <div class="prow" style="height:380px">${ph("green-river-raft.jpg","Green River, Utah","l")}<div class="pcol" style="flex:none">${ph("snowboard-gate.jpg","Backcountry gate, Tahoe","l")}${ph("canyon-sunset.jpg","Canyon country at sunset","l")}</div>
+      <div class="pcol" style="flex:1; justify-content:center; padding-left:14px"><p class="big" style="font-size:34px">Backpacking. Kayaking. Camping. Snowboarding.</p><p style="color:var(--muted); font-size:24px">If it involves a trailhead, a put-in, or a lift line, I'm in.</p></div></div>`},
   {html:`<div class="eyebrow">1 · about me</div><h2>Off the trail: a home lab and a lot of music</h2>
     <div class="cols c2" style="align-items:stretch">
       <div class="tile blue"><svg class="ico" viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="8" width="44" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="3"/><rect x="10" y="25" width="44" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="3"/><rect x="10" y="42" width="44" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="18" cy="15" r="2.5" fill="currentColor"/><circle cx="18" cy="32" r="2.5" fill="currentColor"/><circle cx="18" cy="49" r="2.5" fill="currentColor"/><rect x="30" y="13" width="18" height="4" rx="2" fill="currentColor"/><rect x="30" y="30" width="18" height="4" rx="2" fill="currentColor"/><rect x="30" y="47" width="18" height="4" rx="2" fill="currentColor"/></svg><h3>Home lab</h3><p>An Unraid box in the closet running a stack of Docker services: photo backup, security cameras, and the smart-home glue that ties the house together. Tinkering is the hobby; the uptime is the excuse.</p>
@@ -262,7 +265,7 @@ const SECTIONS = [
 { id:"service", n:"3", title:"Project one · fit checks on demand", cx:-1400, cy:2200, cols:4, cards:[
   {html:`<div class="eyebrow">3 · project one · the problem</div><h2>The fit check</h2>
     <p class="big">A customer wants N units of product X in region Y. Does it fit?</p>
-    <ul><li><b>Supply isn't one dataset.</b> Different products live in different supply stores, each with its own names for products and places. Mappings all the way down.</li><li><b>Fitting is layered.</b> Is there hardware? Is there allocation left to order it? Is there power to run it once it lands?</li><li>Every layer is its own hard problem. This project is about making the check <b>runnable</b>, not about the check itself.</li><li>Getting an answer for one customer <b>took about two weeks</b>.</li></ul>`},
+    <ul><li><b>Supply isn't one dataset.</b> Different products live in different supply stores, each with its own names for products and places. Mappings all the way down.</li><li><b>Fitting is layered.</b> Is there hardware? Is there allocation left to order it? Is there power to run it once it lands?</li><li>Each layer is its own hard problem. This project made the check <b>runnable</b>. It didn't change the check.</li><li>Getting an answer for one customer <b>took about two weeks</b>.</li></ul>`},
   {html:`<div class="eyebrow">3 · project one · the problem</div><h2>What planners actually needed</h2>
     <div class="cols c2">
       <div class="tile"><h3>Now</h3><p>A workload arrives, the planner needs an answer while the customer is still on the line.</p></div>
@@ -294,7 +297,6 @@ const SECTIONS = [
     <table style="margin-top:6px"><tr><th>Option</th><th>Good</th><th>Bad</th><th></th></tr>
       <tr><td><b>Thread pool</b></td><td>Cheap, shared memory, simple</td><td>GIL: CPU-bound runs take turns; I/O-bound traceable runs overlap fine</td><td><span class="tag green">chosen</span></td></tr>
       <tr><td><b>Process pool</b></td><td>True parallelism</td><td>More overhead: an interpreter per worker, inputs and results serialized across processes</td><td><span class="tag grey">if CPU-bound grows</span></td></tr>
-      <tr><td><b>Job per request</b></td><td>Full isolation, scales out</td><td>Startup latency, orchestration</td><td><span class="tag red">too heavy for ~5 users</span></td></tr>
     </table>`},
   {html:`<div class="eyebrow">3 · project one · technical</div><h2>Long-running operations</h2>
     <div class="seq">
@@ -304,16 +306,16 @@ const SECTIONS = [
       <span class="t">t=end</span><span class="m">Run finishes: <code>done: true</code>, metadata, run ID. Caller fetches any workset it wants with <code>GetWorkset(run_id, name)</code>.</span>
     </div>
     <p class="foot">The same long-running-operation pattern Google's public APIs use. Familiar to every caller.</p>`},
-  {html:`<div class="eyebrow">3 · project one · technical</div><h2>Why polling, not push</h2>
+  {opt:true, html:`<div class="eyebrow">3 · project one · technical</div><h2>Why polling, not push</h2>
     <div class="cols c2">
       <div class="tile green"><h3>What it buys</h3><ul><li class="b hide">Callers only need to make RPCs. A callback means every caller must be a server.</li><li class="b hide">State lives in a table, so it survives deadlines, restarts, and load balancing.</li><li class="b hide">Resumable: crash, come back with the ID.</li></ul></div>
       <div class="tile red"><h3>What it costs</h3><ul><li class="b hide">Latency up to one poll interval. Long-polling in <span class="mono">Wait</span> closes most of it.</li><li class="b hide">Table reads while waiting. Trivial at this scale.</li><li class="b hide">Push between Boq nodes was weak anyway.</li></ul></div>
     </div>`},
-  {html:`<div class="eyebrow">3 · project one · technical</div><h2>When things fail</h2>
+  {opt:true, html:`<div class="eyebrow">3 · project one · technical</div><h2>When things fail</h2>
     <ul><li>The run is wrapped: an exception writes the error into the operation, marks <span class="mono">done: true</span>, and the caller sees it on the next wait.</li><li>Progress updates are written sparingly: percent complete, worksets processed. Most callers just wait for done.</li>
     <li class="b hide"><b>The hole I'd close first:</b> if the node itself dies mid-run, nothing runs the except. The operation sits at <span class="mono">done: false</span> forever.</li>
     <li class="b hide"><b>The fix:</b> a heartbeat timestamp on the row, and a reaper that fails anything stale.</li></ul>`},
-  {html:`<div class="eyebrow">3 · project one · technical</div><h2>Three inputs, one door</h2>
+  {opt:true, html:`<div class="eyebrow">3 · project one · technical</div><h2>Three inputs, one door</h2>
     <div class="cols c3">
       <div class="tile amber"><h3>A demand ID</h3><p>The service calls the demand tool, pulls the rows, and shapes them into a workset. What planners use day to day.</p></div>
       <div class="tile amber"><h3>A spreadsheet URL</h3><p>A sheet that follows a template we built. For demand that doesn't live in the tool yet.</p></div>
@@ -344,7 +346,7 @@ const SECTIONS = [
   <span class="k">end</span>   { <span class="k">workset</span>: <span class="s">"shortfall_by_region"</span> <span class="c">rows {…}</span> }
 }</pre>
     <ul><li>A textproto per test. Less boilerplate, sure.</li><li>The real win: <b>anything can read it</b>. Including the graph UI.</li></ul></div>`},
-  {html:`<div class="eyebrow">4 · project two · technical</div><h2>The UI reads them</h2>
+  {opt:true, html:`<div class="eyebrow">4 · project two · technical</div><h2>The UI reads them</h2>
     <ul><li>The graph UI's backend has your <b>workspace</b> checked out, so it sees the test configs in your change.</li><li>Every node and workset inside a test's start-to-end range is <b>highlighted</b>. Gaps are visible at a glance.</li><li>Click a node: the tests that touch it. Hover a test: its start and end worksets. Click: its data and expected rows.</li><li>Editing a chain of nodes? You see which tests you're about to affect <b>before</b> you run anything.</li></ul>`},
   {html:`<div class="eyebrow">4 · project two · technical</div><h2>The UI writes them</h2>
     <ul><li><b>Add test:</b> click start worksets, click end worksets, fill in rows, and the backend writes the config into your workspace.</li><li>No hand-editing textproto. Coverage updates as you go.</li><li>Tests an AI wrote for you show up highlighted, so you review them on the graph rather than in a diff.</li>
@@ -366,7 +368,7 @@ const SECTIONS = [
       <div class="stat"><span class="n">~5</span><span class="l">planners running at once, comfortably</span></div>
     </div>
     <ul><li>It was never fit-check specific. It runs any Delos workflow, and <b>other business processes run through it today</b>, along with the graph UI and its LLM assistant.</li><li>Revenue impact is hard to isolate in a market where everyone wants every core. The planners' turnaround is not.</li></ul>`},
-  {html:`<div class="eyebrow">6 · reflection</div><h2>Scars</h2>
+  {opt:true, html:`<div class="eyebrow">6 · reflection</div><h2>Scars</h2>
     <ul><li><b>Attempt one was wrong.</b> I first gave each planner their own Plx workflow with a different tag baked in. Isolation, sort of. Tracking them was a nightmare. That pain is what made the service obvious.</li><li><b>The service grew a second job.</b> The graph UI needed a backend, the service was there, so it became one. None of that needed to be in Python. It eventually moved to its own service.</li></ul>`},
   {html:`<div class="eyebrow">6 · reflection</div><h2>What I'd do differently</h2>
     <ul><li><b>Recognize sooner when a requirement changes the architecture.</b> "Run in parallel" wasn't a feature. It was a different system. Treating it as a config tweak, one workflow per planner, cost a whole phase.</li><li><b>Keep the service single-purpose.</b> Say no to the UI-backend detour earlier, before it has users.</li><li><b>Design for the node dying.</b> A heartbeat on the operation row, and a reaper for stale ones, before the first stuck operation rather than after.</li></ul>`},
@@ -467,8 +469,8 @@ SECTIONS.forEach(sec=>{
   if(sec.n){ const lab=document.createElement("div"); lab.className="region-label"; lab.innerHTML=`<small>SECTION ${sec.n}</small>${sec.title}`; lab.dataset.px=minx; lab.dataset.py=sec.cy-totalH/2-300; canvas.appendChild(lab);
     SECTION_START[sec.n]=STEPS.length; STEPS.push({sec, view:true, ...bbox, name:sec.title}); routePts.push([sec.cx,sec.cy]); }
   else routePts.push([sec.cx,sec.cy]);
-  cards.forEach((c,i)=>{ const p=placed[i]; const el=document.createElement("div"); el.className="card"+(c.wide?" wide":"")+(c.demo?" demo":""); el.dataset.px=p.x-p.w/2; el.dataset.py=p.y-p.h/2; el.innerHTML=c.html; canvas.appendChild(el);
-    STEPS.push({sec, el, x:p.x, y:p.y, w:p.w+80, h:p.h+80, name:sec.title||"Title"}); });
+  cards.forEach((c,i)=>{ const p=placed[i]; const el=document.createElement("div"); el.className="card"+(c.wide?" wide":"")+(c.demo?" demo":"")+(c.opt?" opt":""); el.dataset.px=p.x-p.w/2; el.dataset.py=p.y-p.h/2; el.innerHTML=c.html; canvas.appendChild(el);
+    STEPS.push({sec, el, x:p.x, y:p.y, w:p.w+80, h:p.h+80, name:sec.title||"Title", opt:!!c.opt}); });
 });
 renderArch(document.getElementById("arch"));
 // route line through sections (map furniture, drawn under cards)
@@ -484,14 +486,14 @@ function builds(step){ return step.el ? [...step.el.querySelectorAll(".b")] : []
 function go(i, opts={}){
   i=Math.max(0,Math.min(STEPS.length-1,i)); const dir=opts.dir||0; const prev=STEPS[cur];
   if(dir>0 && prev.el) builds(prev).forEach(b=>b.classList.remove("hide"));
-  cur=i; inOverview=false; const s=STEPS[cur];
+  cur=i; inOverview=false; const s=STEPS[cur]; document.querySelectorAll(".card.cur").forEach(e=>e.classList.remove("cur")); if(s.el) s.el.classList.add("cur");
   if(dir>=0 && !opts.keep) builds(s).forEach(b=>b.classList.add("hide")); if(dir<0) builds(s).forEach(b=>b.classList.remove("hide"));
   canvas.classList.toggle("fast", !!opts.fast); camera(s); hud(); history.replaceState(null,"","#"+(cur+1));
 }
-function next(){ if(inOverview){ go(cur,{keep:true}); return; } const hb=builds(STEPS[cur]).find(b=>b.classList.contains("hide")); if(hb){ hb.classList.remove("hide"); return; } if(cur<STEPS.length-1) go(cur+1,{dir:1}); }
-function prevStep(){ if(inOverview){ go(cur,{keep:true}); return; } const shown=builds(STEPS[cur]).filter(b=>!b.classList.contains("hide")); if(shown.length){ shown[shown.length-1].classList.add("hide"); return; } if(cur>0) go(cur-1,{dir:-1}); }
+function next(){ if(inOverview){ go(cur,{keep:true}); return; } const hb=builds(STEPS[cur]).find(b=>b.classList.contains("hide")); if(hb){ hb.classList.remove("hide"); return; } let j=cur+1; while(j<STEPS.length && STEPS[j].opt) j++; if(j<STEPS.length) go(j,{dir:1}); }
+function prevStep(){ if(inOverview){ go(cur,{keep:true}); return; } const shown=builds(STEPS[cur]).filter(b=>!b.classList.contains("hide")); if(shown.length){ shown[shown.length-1].classList.add("hide"); return; } let j=cur-1; while(j>0 && STEPS[j].opt) j--; if(j>=0 && j!==cur) go(j,{dir:-1}); }
 function overview(){ if(inOverview){ go(cur,{keep:true}); return; } inOverview=true; camera(OVERVIEW); hud(); }
-function hud(){ const s=STEPS[cur]; const secIdx=STEPS.slice(0,cur+1).filter(x=>x.view).length; document.getElementById("where").textContent = inOverview ? "map · press → to return" : `${s.name}${s.view?" · section":""} · ${cur+1}/${STEPS.length}`; }
+function hud(){ const s=STEPS[cur]; const secIdx=STEPS.slice(0,cur+1).filter(x=>x.view).length; document.getElementById("where").textContent = inOverview ? "map · press → to return" : `${s.name}${s.view?" · section":""} · ${s.opt?"backup":(STEPS.slice(0,cur+1).filter(x=>!x.opt).length+"/"+STEPS.filter(x=>!x.opt).length)}`; }
 document.getElementById("bPrev").onclick=prevStep; document.getElementById("bNext").onclick=next; document.getElementById("bOver").onclick=overview;
 document.getElementById("bHelp").onclick=()=>{document.getElementById("help").hidden=false;};
 document.getElementById("help").onclick=()=>{document.getElementById("help").hidden=true;};
