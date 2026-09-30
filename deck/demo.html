@@ -165,6 +165,13 @@ table.data td.num{text-align:right}
 table.data th.num{text-align:right}
 table.data tr.diff td{background:var(--warn-bg)}
 .cap{font-size:12px;color:var(--muted);margin:0 0 8px}
+.grp{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);padding:8px 8px 2px}
+table.data.edit td{padding:2px 6px 2px 0;border-bottom:0}
+.cell{width:100%;min-width:84px;font-family:var(--mono);font-size:11.5px;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:3px;padding:4px 6px}
+.cell.num{text-align:right;min-width:60px;font-variant-numeric:tabular-nums}
+.cell:focus{outline:2px solid var(--accent);outline-offset:0;background:var(--panel)}
+.btn.rm{padding:1px 7px;color:var(--muted)}
+.pill:not(.s):not(.e):not(.w):not(.p):not(.ok):not(.bad){color:var(--muted);border-color:var(--line)}
 .cap b{color:var(--ink);font-weight:600;font-family:var(--mono)}
 pre.proto{margin:0;font-family:var(--mono);font-size:11.5px;line-height:1.5;white-space:pre;color:var(--ink)}
 pre.proto .k{color:var(--proc)}
@@ -329,7 +336,9 @@ const EDGES = []; PROCS.forEach(p=>{p.inputs.forEach(i=>EDGES.push([i,p.id])); E
 const OUT = {}, IN = {}; EDGES.forEach(([a,b])=>{(OUT[a]=OUT[a]||[]).push(b);(IN[b]=IN[b]||[]).push(a);});
 
 function reach(seeds, adj){const seen=new Set(seeds); const q=[...seeds]; while(q.length){const n=q.shift();(adj[n]||[]).forEach(m=>{if(!seen.has(m)){seen.add(m);q.push(m);}});} return seen;}
-function subgraph(starts, ends){const f=reach(starts,OUT), b=reach(ends,IN); return new Set([...f].filter(n=>b.has(n)));}
+function subgraph(starts, ends){const f=reach(starts,OUT), b=reach(ends,IN); const sg=new Set([...f].filter(n=>b.has(n)));
+  /* a node whose output is supplied as a start workset must not run and overwrite it */
+  PROCS.forEach(p=>{ if(starts.includes(p.output)) sg.delete(p.id); }); return sg;}
 
 /* run a subgraph in memory: returns {data, trace, error} */
 function runSubgraph(starts, startData, ends){
@@ -519,42 +528,92 @@ async function runTest(i){
 
 /* ---------- add test flow ---------- */
 function startAdd(){ S.mode="add"; S.pickStarts=[]; S.pickEnds=[]; S.activeTest=null; S.selNode=null; S.run=null; S.addStage="starts"; $("drawer").hidden=true; paint(); renderSide(); updateBanner(); fitView(); }
-function cancelAdd(){ S.mode=null; S.pickStarts=[]; S.pickEnds=[]; $("banner").hidden=true; paint(); renderSide(); }
+function cancelAdd(){ S.mode=null; S.pickStarts=[]; S.pickEnds=[]; $("banner").hidden=true; $("drawer").hidden=true; paint(); renderSide(); }
 function updateBanner(){ const b=$("banner"); b.hidden=false;
   b.innerHTML = S.addStage==="starts" ? `<span>Click the <b>start worksets</b> for this test (${S.pickStarts.length} picked)</span><button class="btn small primary" id="nextStage" ${S.pickStarts.length?"":"disabled"}>Next: pick end worksets</button><button class="btn small" id="cancelAdd">Cancel</button>`
     : `<span>Now click the <b>end worksets</b> to assert on (${S.pickEnds.length} picked)</span><button class="btn small primary" id="nextStage" ${S.pickEnds.length?"":"disabled"}>Next: data</button><button class="btn small" id="cancelAdd">Cancel</button>`;
-  $("cancelAdd").onclick=cancelAdd; $("nextStage").onclick=()=>{ if(S.addStage==="starts"){S.addStage="ends"; updateBanner(); renderSide();} else { S.addStage="data"; $("banner").hidden=true; renderSide(); } };
+  $("cancelAdd").onclick=cancelAdd; $("nextStage").onclick=()=>{ if(S.addStage==="starts"){S.addStage="ends"; updateBanner(); renderSide();} else { S.addStage="data"; $("banner").hidden=true; initAddData(); renderSide(); renderEditor(); } };
 }
 function pickNode(id){ const n=NODES[id]; if(n.kind!=="ws"){toast("Pick worksets. Process nodes between them run automatically."); return;}
   const arr=S.addStage==="starts"?S.pickStarts:S.pickEnds; const other=S.addStage==="starts"?S.pickEnds:S.pickStarts;
   if(other.includes(id)){toast("Already picked on the other side."); return;}
   const k=arr.indexOf(id); if(k>=0) arr.splice(k,1); else arr.push(id); paint(); updateBanner(); renderSide(); }
+const SCHEMA={
+  demand_raw:[["product","str"],["site","str"],["wk","series"]],
+  product_map:[["kind","str"],["from","str"],["to","str"]],
+  supply_raw:[["product","str"],["region","str"],["wk","series"]],
+  reservations:[["product","str"],["region","str"],["wk","series"]],
+  available_supply:[["product","str"],["region","str"],["wk","series"]],
+  demand_normalized:[["product","str"],["site","str"],["wk","series"]],
+  demand_by_region:[["product","str"],["region","str"],["wk","series"]],
+  fit_result:[["product","str"],["region","str"],["demand","series"],["available","series"],["fitted","series"]],
+  shortfall_by_region:[["product","str"],["region","str"],["short","series"]],
+  fit_summary:[["product","str"],["demand","num"],["fitted","num"],["regions_short","num"],["fit_pct","num"]],
+  alternatives:[["product","str"],["short_in","str"],["alt_region","str"],["surplus","series"]],
+};
+const clone=o=>JSON.parse(JSON.stringify(o));
+function blankRow(ws){ const r={}; SCHEMA[ws].forEach(([k,t])=>{ r[k]= t==="series"?z(): t==="num"?0:""; }); return r; }
+function initAddData(){
+  const sg=subgraph(S.pickStarts,S.pickEnds); const procs=[...sg].filter(n=>NODES[n].kind==="proc");
+  S.addInputs=Object.fromEntries(S.pickStarts.map(s=>[s, clone(FIX[s]||sampleFor(s))]));
+  S.addExpected=Object.fromEntries(S.pickEnds.map(e=>[e,[]])); S.addExpectedSet=false;
+  S.addEdit={side:"in", ws:S.pickStarts[0]};
+  S.addName=`${S.pickEnds[0]}_from_${S.pickStarts.join("_")}`;
+  S.addDesc=`Runs ${procs.join(", ")} from ${S.pickStarts.join(", ")} and checks ${S.pickEnds.join(", ")}.`;
+}
+function addRows(side,ws){ return side==="in"?S.addInputs[ws]:S.addExpected[ws]; }
+function renderEditor(msg, cls){
+  openDrawer("New test · data", msg||"Edit the input rows. Type the expected rows, or fill them from a run.", cls);
+  const tr=$("trace"); const item=(side,ws)=>`<button data-side="${side}" data-ws="${ws}" class="${S.addEdit.side===side&&S.addEdit.ws===ws?"active":""}"><span class="k ws">▤</span>${ws}<span class="ms">${addRows(side,ws).length} rows</span></button>`;
+  tr.innerHTML=`<div class="grp">input rows</div>`+S.pickStarts.map(w=>item("in",w)).join("")+`<div class="grp">expected rows</div>`+S.pickEnds.map(w=>item("exp",w)).join("");
+  tr.querySelectorAll("button").forEach(bn=>bn.onclick=()=>{ S.addEdit={side:bn.dataset.side, ws:bn.dataset.ws}; renderEditor(); });
+  const {side,ws}=S.addEdit; const rows=addRows(side,ws); const cols=[]; SCHEMA[ws].forEach(([k,t])=>{ if(t==="series") for(let i=0;i<W;i++) cols.push({k,t,i,label:`${k}[w${i+1}]`}); else cols.push({k,t,label:k}); });
+  const cell=(r,ri,c)=>{ const v=c.t==="series"?r[c.k][c.i]:r[c.k]; const num=c.t!=="str"; return `<td><input id="c_${side}_${ws}_${ri}_${c.k}_${c.i??0}" class="cell ${num?"num":""}" ${num?'inputmode="numeric"':''} data-r="${ri}" data-k="${c.k}" data-t="${c.t}" ${c.i!=null?`data-i="${c.i}"`:""} value="${esc(v)}"></td>`; };
+  $("tablewrap").innerHTML=`<p class="cap"><b>${ws}</b> · ${side==="in"?"input rows for this test":"rows the test expects at the end"}</p>
+    <table class="data edit"><thead><tr>${cols.map(c=>`<th class="${c.t!=="str"?"num":""}">${esc(c.label)}</th>`).join("")}<th></th></tr></thead>
+    <tbody>${rows.map((r,ri)=>`<tr>${cols.map(c=>cell(r,ri,c)).join("")}<td><button class="btn small rm" data-r="${ri}" title="Remove row">×</button></td></tr>`).join("")||`<tr><td colspan="${cols.length+1}" class="muted" style="padding:10px 0">No rows yet.</td></tr>`}</tbody></table>
+    <div class="row" style="margin-top:10px"><button class="btn small" id="addRowBtn">＋ Add row</button>${side==="exp"?'<button class="btn small" id="fillBtn2">Fill expected from a run</button>':''}</div>`;
+  const tw=$("tablewrap");
+  tw.querySelectorAll("input.cell").forEach(inp=>inp.oninput=()=>{ const r=rows[+inp.dataset.r], k=inp.dataset.k, t=inp.dataset.t; const val=t==="str"?inp.value:(Number(inp.value)||0);
+    if(t==="series") r[k][+inp.dataset.i]=val; else r[k]=val; if(side==="exp") S.addExpectedSet=true; updateAddSummary(); });
+  tw.querySelectorAll("button.rm").forEach(bn=>bn.onclick=()=>{ rows.splice(+bn.dataset.r,1); if(side==="exp") S.addExpectedSet=true; renderEditor(); updateAddSummary(); });
+  $("addRowBtn").onclick=()=>{ rows.push(blankRow(ws)); if(side==="exp") S.addExpectedSet=true; renderEditor(); updateAddSummary(); const last=tw.querySelector(`tbody tr:last-child input`); if(last) last.focus(); };
+  if($("fillBtn2")) $("fillBtn2").onclick=fillExpected;
+}
+async function fillExpected(){
+  setSvc("workflow-service · boq/fitcheck-ws · RunSubgraph in flight"); await new Promise(r=>setTimeout(r,320)); setSvc("workflow-service · boq/fitcheck-ws · idle");
+  const r=runSubgraph(S.pickStarts,S.addInputs,S.pickEnds);
+  if(r.error){ renderEditor("validation: "+r.error,"bad"); updateAddSummary(); return; }
+  S.pickEnds.forEach(e=>{ S.addExpected[e]=clone(r.data[e]); }); S.addExpectedSet=true; S.addEdit={side:"exp", ws:S.pickEnds[0]};
+  renderEditor("Expected rows filled from an in-memory run of your input rows. Edit them if the run is not what you want to assert.","ok"); updateAddSummary();
+}
+function updateAddSummary(){
+  const n=$("addSummary"); if(!n) return; const ni=S.pickStarts.reduce((t,w)=>t+S.addInputs[w].length,0), ne=S.pickEnds.reduce((t,w)=>t+S.addExpected[w].length,0);
+  n.innerHTML=`<span class="pill w">inputs · ${ni} rows</span>`+(S.addExpectedSet?`<span class="pill ok">expected · ${ne} rows</span>`:`<span class="pill">expected · not set</span>`);
+  $("writeBtn").disabled=!S.addExpectedSet;
+}
 function renderAddForm(){
   const body=$("sideBody"), det=$("detail"); det.hidden=true; $("clearSel").hidden=false;
-  $("sideTitle").textContent="New test"; $("sideCount").textContent=S.addStage==="data"?"fill in data":"pick nodes on the graph";
+  $("sideTitle").textContent="New test"; $("sideCount").textContent=S.addStage==="data"?"enter data":"pick nodes on the graph";
   const sg = S.pickStarts.length&&S.pickEnds.length ? subgraph(S.pickStarts,S.pickEnds) : new Set();
   const procs=[...sg].filter(n=>NODES[n].kind==="proc");
   let html=`<div class="detail" style="border-top:0"><dl class="kv"><dt>start</dt><dd>${S.pickStarts.map(s=>`<span class="pill s">${s}</span>`).join("")||'<span class="muted">none yet</span>'}</dd>
     <dt>end</dt><dd>${S.pickEnds.map(s=>`<span class="pill e">${s}</span>`).join("")||'<span class="muted">none yet</span>'}</dd>
     <dt>will run</dt><dd>${procs.map(s=>`<span class="pill p">${s}</span>`).join("")||'<span class="muted">—</span>'}</dd></dl>`;
   if(S.addStage==="data"){
-    const sugg = S.pickStarts.map(s=>s).join("_");
-    html+=`<div class="field"><label>name</label><input id="fName" value="${esc(S.pickEnds[0])}_from_${esc(sugg)}"></div>
-      <div class="field"><label>description</label><textarea id="fDesc">Runs ${procs.join(", ")} from ${S.pickStarts.join(", ")} and checks ${S.pickEnds.join(", ")}.</textarea></div>
-      <div class="field"><label>input data</label><div class="row"><span class="pill w">sample rows from ${S.pickStarts.length} fixture${S.pickStarts.length>1?"s":""}</span></div><p class="muted" style="margin:0">Prefilled from the workset fixtures. Edit after it is written, or hand the config to an AI to vary the rows.</p></div>
-      <div class="field"><label>expected data</label><div class="row"><button class="btn small" id="suggestBtn">Suggest from a run</button><span class="muted" id="suggestNote">not set</span></div></div>
+    html+=`<div class="field"><label for="fName">name</label><input id="fName" value="${esc(S.addName)}"></div>
+      <div class="field"><label for="fDesc">description</label><textarea id="fDesc">${esc(S.addDesc)}</textarea></div>
+      <div class="field"><label>data</label><div class="row" id="addSummary"></div><p class="muted" style="margin:0">Rows are edited in the panel below. Inputs start from sample rows so you only change what the test is about.</p></div>
+      <div class="row"><button class="btn small" id="editBtn">Edit data</button><button class="btn small" id="suggestBtn">Fill expected from a run</button></div>
       <div class="row" style="margin-top:6px"><button class="btn primary small" id="writeBtn" disabled>Write test to workspace</button><button class="btn small" id="cancelAdd2">Cancel</button></div>`;
   } else html+=`<p class="muted">${S.addStage==="starts"?"Click worksets on the graph to use as inputs.":"Click the worksets whose rows the test should assert on."}</p>`;
   html+=`</div>`; body.innerHTML=html;
   if(S.addStage==="data"){
-    const inputs=Object.fromEntries(S.pickStarts.map(s=>[s, (S.run&&S.run.data[s])||FIX[s]||sampleFor(s)]));
-    let expected=null;
-    $("suggestBtn").onclick=async()=>{ setSvc("workflow-service · boq/fitcheck-ws · RunSubgraph in flight"); $("suggestNote").textContent="running…"; await new Promise(r=>setTimeout(r,320)); setSvc("workflow-service · boq/fitcheck-ws · idle");
-      const r=runSubgraph(S.pickStarts,inputs,S.pickEnds); if(r.error){ $("suggestNote").textContent=""; $("suggestNote").innerHTML=`<span class="pill bad">validation</span> ${esc(r.error)}`; return; }
-      expected=Object.fromEntries(S.pickEnds.map(e=>[e,r.data[e]])); $("suggestNote").innerHTML=S.pickEnds.map(e=>`<span class="pill ok">${e} · ${r.data[e].length} rows</span>`).join(""); $("writeBtn").disabled=false; };
-    $("cancelAdd2").onclick=cancelAdd;
-    $("writeBtn").onclick=()=>{ const t={name:$("fName").value.trim()||"new_test", desc:$("fDesc").value.trim(), starts:[...S.pickStarts], ends:[...S.pickEnds], inputs, expected, status:"new"};
+    $("fName").oninput=e=>{S.addName=e.target.value;}; $("fDesc").oninput=e=>{S.addDesc=e.target.value;};
+    $("editBtn").onclick=()=>renderEditor(); $("suggestBtn").onclick=fillExpected; $("cancelAdd2").onclick=cancelAdd;
+    $("writeBtn").onclick=()=>{ const t={name:S.addName.trim()||"new_test", desc:S.addDesc.trim(), starts:[...S.pickStarts], ends:[...S.pickEnds], inputs:clone(S.addInputs), expected:clone(S.addExpected), status:"new"};
       TESTS.push(t); S.mode=null; S.pickStarts=[]; S.pickEnds=[]; S.activeTest=TESTS.length-1; paint(); renderSide(); showConfig(t); focusNodes([...subgraph(t.starts,t.ends)]); toast(`Wrote ${t.name} to subgraph_tests.textproto`); };
+    updateAddSummary();
   }
 }
 function sampleFor(id){ /* derived workset with no fixture: produce rows by running from the sources */ const r=runSubgraph(Object.keys(FIX),FIX,[id]); return r.data[id]||[]; }
