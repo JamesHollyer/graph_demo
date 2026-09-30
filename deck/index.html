@@ -3,8 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<style>:root{color-scheme:light dark}img{max-width:100%}[hidden]{display:none!important}.ph-gone{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:18px;text-align:center;padding:12px}
-</style>
+<style>:root{color-scheme:light dark}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Fit Checks On Demand</title>
 <link rel="stylesheet" href="fonts/fonts.css">
 <style>
@@ -170,7 +169,6 @@ th.num{text-align:right}
 .help h3{font-size:18px;margin:0 0 10px}
 .help table{font-size:14px}.help td{padding:4px 10px 4px 0;border:0}
 kbd{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 6px;background:var(--card2)}
-.ph-gone{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:18px;text-align:center;padding:12px}
 </style>
 </head>
 <body>
@@ -207,7 +205,7 @@ kbd{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-b
 <script>
 /* ============ content ============ */
 const CW=1200, CH=680, GAPX=140, GAPY=130;
-const ph=(f,cap,o="l")=>`<figure class="ph ${o}"><span class="ph-gone">${cap}</span><figcaption>${cap}</figcaption></figure>`;
+const ph=(f,cap,o="l")=>`<figure class="ph ${o}"><img src="photos/${f}" alt="${cap}"><figcaption>${cap}</figcaption></figure>`;
 
 const SECTIONS = [
 { id:"title", n:"", title:"", cx:0, cy:-3700, cols:1, cards:[
