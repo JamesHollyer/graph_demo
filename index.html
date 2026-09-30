@@ -260,10 +260,10 @@ kbd{font-family:var(--mono);font-size:10.5px;border:1px solid var(--line);border
 /* ---------- fixture data (all made up) ---------- */
 const FIX = {
   demand_raw: [
-    {product:"C4-std", site:"us-e1", wk:[1200,1400,1600,1800]},
-    {product:"GX-8",   site:"us-w2", wk:[64,64,96,128]},
-    {product:"C4-hi",  site:"eu-w1", wk:[300,300,300,300]},
-    {product:"GX-8",   site:"sg-1",  wk:[16,16,16,16]},
+    {product:"C4-std", site:"us-e1", qty:[1200,1400,1600,1800]},
+    {product:"GX-8",   site:"us-w2", qty:[64,64,96,128]},
+    {product:"C4-hi",  site:"eu-w1", qty:[300,300,300,300]},
+    {product:"GX-8",   site:"sg-1",  qty:[16,16,16,16]},
   ],
   product_map: [
     {kind:"product", from:"C4-std", to:"cpu-gen4"},
@@ -274,19 +274,21 @@ const FIX = {
     {kind:"site", from:"eu-w1", to:"eu-west1"},
   ],
   supply_raw: [
-    {product:"cpu-gen4",    region:"us-east1", wk:[2000,2000,2000,2000]},
-    {product:"gpu-x8",      region:"us-west2", wk:[96,96,96,96]},
-    {product:"cpu-gen4-hm", region:"eu-west1", wk:[400,400,400,400]},
-    {product:"gpu-x8",      region:"us-east1", wk:[64,64,64,64]},
-    {product:"gpu-x8",      region:"eu-west1", wk:[32,32,32,32]},
+    {product:"cpu-gen4",    region:"us-east1", qty:[2000,2000,2000,2000]},
+    {product:"gpu-x8",      region:"us-west2", qty:[96,96,96,96]},
+    {product:"cpu-gen4-hm", region:"eu-west1", qty:[400,400,400,400]},
+    {product:"gpu-x8",      region:"us-east1", qty:[64,64,64,64]},
+    {product:"gpu-x8",      region:"eu-west1", qty:[32,32,32,32]},
   ],
   reservations: [
-    {product:"cpu-gen4",    region:"us-east1", wk:[500,500,500,500]},
-    {product:"gpu-x8",      region:"us-west2", wk:[16,16,16,16]},
-    {product:"cpu-gen4-hm", region:"eu-west1", wk:[150,150,150,150]},
+    {product:"cpu-gen4",    region:"us-east1", qty:[500,500,500,500]},
+    {product:"gpu-x8",      region:"us-west2", qty:[16,16,16,16]},
+    {product:"cpu-gen4-hm", region:"eu-west1", qty:[150,150,150,150]},
   ],
 };
-const W = 4; // weeks
+const W = 4; // points per series
+const DATES=["2026-10-05","2026-10-12","2026-10-19","2026-10-26"]; // one timestamp per point
+const sLabel=(k,i)=>(k==="qty"?"":k+" · ")+DATES[i];
 const z = ()=>Array(W).fill(0);
 const vsub=(a,b)=>a.map((v,i)=>v-b[i]);
 const vmin=(a,b)=>a.map((v,i)=>Math.min(v,b[i]));
@@ -311,16 +313,16 @@ const WORKSETS = [
 const PROCS = [
   {id:"normalize_demand", name:"normalize_demand", inputs:["demand_raw","product_map"], output:"demand_normalized", x:260, y:95,
    fn:(d,m)=>{const pm=Object.fromEntries(m.filter(r=>r.kind==="product").map(r=>[r.from,r.to]));
-     return d.map(r=>({product:pm[r.product]||r.product, site:r.site, wk:r.wk.slice()}));}},
+     return d.map(r=>({product:pm[r.product]||r.product, site:r.site, qty:r.qty.slice()}));}},
   {id:"net_supply", name:"net_supply", inputs:["supply_raw","reservations"], output:"available_supply", x:260, y:385,
-   fn:(s,rv)=>{const rm=Object.fromEntries(rv.map(r=>[key(r),r.wk]));
-     return s.map(r=>({product:r.product, region:r.region, wk:vsub(r.wk, rm[key(r)]||z())}));}},
+   fn:(s,rv)=>{const rm=Object.fromEntries(rv.map(r=>[key(r),r.qty]));
+     return s.map(r=>({product:r.product, region:r.region, qty:vsub(r.qty, rm[key(r)]||z())}));}},
   {id:"map_locations", name:"map_locations", inputs:["demand_normalized","product_map"], output:"demand_by_region", x:700, y:95,
    fn:(d,m)=>{const sm=Object.fromEntries(m.filter(r=>r.kind==="site").map(r=>[r.from,r.to]));
-     return d.map(r=>({product:r.product, region:sm[r.site]||"unmapped", wk:r.wk.slice()}));}},
+     return d.map(r=>({product:r.product, region:sm[r.site]||"unmapped", qty:r.qty.slice()}));}},
   {id:"fit", name:"fit", inputs:["demand_by_region","available_supply"], output:"fit_result", x:1140, y:240,
-   fn:(d,a)=>{const am=Object.fromEntries(a.map(r=>[key(r),r.wk]));
-     return d.map(r=>{const av=am[key(r)]||z(); return {product:r.product, region:r.region, demand:r.wk.slice(), available:av.slice(), fitted:vmin(r.wk,av)};});}},
+   fn:(d,a)=>{const am=Object.fromEntries(a.map(r=>[key(r),r.qty]));
+     return d.map(r=>{const av=am[key(r)]||z(); return {product:r.product, region:r.region, demand:r.qty.slice(), available:av.slice(), fitted:vmin(r.qty,av)};});}},
   {id:"shortfall", name:"shortfall", inputs:["fit_result"], output:"shortfall_by_region", x:1580, y:330,
    fn:(f)=>f.map(r=>({product:r.product, region:r.region, short:vmax0(vsub(r.demand,r.fitted))})).filter(r=>sum(r.short)>0)},
   {id:"summarize", name:"summarize", inputs:["fit_result","shortfall_by_region"], output:"fit_summary", x:2020, y:150,
@@ -366,14 +368,14 @@ function mkTest(name, desc, starts, ends, startData){
 const TESTS = [
   mkTest("normalize_demand_aliases", "Demand product aliases resolve to canonical product ids.", ["demand_raw","product_map"], ["demand_normalized"]),
   mkTest("map_locations_unknown_site", "A site with no mapping lands in region \"unmapped\" instead of failing the run.", ["demand_normalized","product_map"], ["demand_by_region"],
-    {demand_normalized:[{product:"gpu-x8",site:"us-w2",wk:[64,64,96,128]},{product:"gpu-x8",site:"sg-1",wk:[16,16,16,16]}], product_map:FIX.product_map}),
+    {demand_normalized:[{product:"gpu-x8",site:"us-w2",qty:[64,64,96,128]},{product:"gpu-x8",site:"sg-1",qty:[16,16,16,16]}], product_map:FIX.product_map}),
   mkTest("net_supply_subtracts_reservations", "Available supply is raw supply minus reservations; unreserved rows pass through.", ["supply_raw","reservations"], ["available_supply"]),
   mkTest("fit_full", "Demand at or below available supply fits completely.", ["demand_by_region","available_supply"], ["fit_result"],
-    {demand_by_region:[{product:"cpu-gen4-hm",region:"eu-west1",wk:[100,100,100,100]}], available_supply:[{product:"cpu-gen4-hm",region:"eu-west1",wk:[250,250,250,250]}]}),
+    {demand_by_region:[{product:"cpu-gen4-hm",region:"eu-west1",qty:[100,100,100,100]}], available_supply:[{product:"cpu-gen4-hm",region:"eu-west1",qty:[250,250,250,250]}]}),
   mkTest("fit_partial_shortfall", "Demand above supply is capped at available and the remainder shows up as shortfall.", ["demand_by_region","available_supply"], ["shortfall_by_region"],
-    {demand_by_region:[{product:"gpu-x8",region:"us-west2",wk:[64,64,96,128]}], available_supply:[{product:"gpu-x8",region:"us-west2",wk:[80,80,80,80]}]}),
+    {demand_by_region:[{product:"gpu-x8",region:"us-west2",qty:[64,64,96,128]}], available_supply:[{product:"gpu-x8",region:"us-west2",qty:[80,80,80,80]}]}),
   mkTest("fit_no_supply_row", "A demand row with no matching supply row fits zero, not an error.", ["demand_by_region","available_supply"], ["fit_result"],
-    {demand_by_region:[{product:"gpu-x8",region:"unmapped",wk:[16,16,16,16]}], available_supply:[]}),
+    {demand_by_region:[{product:"gpu-x8",region:"unmapped",qty:[16,16,16,16]}], available_supply:[]}),
   mkTest("end_to_end_summary", "Whole fit check from raw sources to the per-product summary.", ["demand_raw","product_map","supply_raw","reservations"], ["fit_summary"]),
 ];
 
@@ -485,7 +487,7 @@ world.addEventListener("keydown",e=>{const n=e.target.closest(".node"); if(n&&(e
 function rowsToTable(rows, diffIdx){
   if(!rows||!rows.length) return `<p class="muted">0 rows</p>`;
   const cols=[]; rows.forEach(r=>Object.keys(r).forEach(k=>{if(!cols.includes(k))cols.push(k);}));
-  const expanded=[]; cols.forEach(c=>{const v=rows.find(r=>Array.isArray(r[c]))?.[c]; if(v) v.forEach((_,i)=>expanded.push({c,i,label:`${c}[w${i+1}]`,num:true})); else expanded.push({c,label:c,num:typeof rows[0][c]==="number"});});
+  const expanded=[]; cols.forEach(c=>{const v=rows.find(r=>Array.isArray(r[c]))?.[c]; if(v) v.forEach((_,i)=>expanded.push({c,i,label:sLabel(c,i),num:true})); else expanded.push({c,label:c,num:typeof rows[0][c]==="number"});});
   return `<table class="data"><thead><tr>${expanded.map(e=>`<th class="${e.num?"num":""}">${esc(e.label)}</th>`).join("")}</tr></thead><tbody>${
     rows.map((r,ri)=>`<tr class="${diffIdx&&diffIdx.has(ri)?"diff":""}">${expanded.map(e=>{const v=e.i!=null?(r[e.c]||[])[e.i]:r[e.c]; return `<td class="${e.num?"num":""}">${v==null?"":esc(v)}</td>`;}).join("")}</tr>`).join("")}</tbody></table>`;
 }
@@ -494,7 +496,7 @@ $("drawerClose").onclick=()=>{$("drawer").hidden=true;};
 function showInputs(t){ openDrawer(`Inputs · ${t.name}`,"start worksets as written in the test config"); $("trace").innerHTML=t.starts.map(s=>`<button data-s="${s}"><span class="k ws">▤</span>${s}</button>`).join("");
   const show=(s)=>{ $("trace").querySelectorAll("button").forEach(b=>b.classList.toggle("active",b.dataset.s===s)); $("tablewrap").innerHTML=`<p class="cap"><b>${s}</b> · input rows</p>`+rowsToTable(t.inputs[s]); };
   $("trace").querySelectorAll("button").forEach(b=>b.onclick=()=>show(b.dataset.s)); show(t.starts[0]); }
-function protoRows(rows,ind){ return rows.map(r=>`${ind}rows { ${Object.entries(r).map(([k,v])=>Array.isArray(v)?`${k}: [${v.join(", ")}]`:`${k}: ${typeof v==="number"?v:`"${v}"`}`).join("  ")} }`).join("\n"); }
+function protoRows(rows,ind){ return rows.map(r=>`${ind}rows { ${Object.entries(r).map(([k,v])=>Array.isArray(v)?`${k} { ${v.map((x,i)=>`"${DATES[i]}": ${x}`).join("  ")} }`:`${k}: ${typeof v==="number"?v:`"${v}"`}`).join("  ")} }`).join("\n"); }
 function testProto(t){
   return `<span class="k">test</span> {\n  <span class="k">name</span>: <span class="s">"${t.name}"</span>\n  <span class="k">description</span>: <span class="s">"${esc(t.desc)}"</span>\n`+
     t.starts.map(s=>`  <span class="k">start</span> {\n    <span class="k">workset</span>: <span class="s">"${s}"</span>\n${esc(protoRows(t.inputs[s],"    "))}\n  }`).join("\n")+"\n"+
@@ -539,13 +541,13 @@ function pickNode(id){ const n=NODES[id]; if(n.kind!=="ws"){toast("Pick worksets
   if(other.includes(id)){toast("Already picked on the other side."); return;}
   const k=arr.indexOf(id); if(k>=0) arr.splice(k,1); else arr.push(id); paint(); updateBanner(); renderSide(); }
 const SCHEMA={
-  demand_raw:[["product","str"],["site","str"],["wk","series"]],
+  demand_raw:[["product","str"],["site","str"],["qty","series"]],
   product_map:[["kind","str"],["from","str"],["to","str"]],
-  supply_raw:[["product","str"],["region","str"],["wk","series"]],
-  reservations:[["product","str"],["region","str"],["wk","series"]],
-  available_supply:[["product","str"],["region","str"],["wk","series"]],
-  demand_normalized:[["product","str"],["site","str"],["wk","series"]],
-  demand_by_region:[["product","str"],["region","str"],["wk","series"]],
+  supply_raw:[["product","str"],["region","str"],["qty","series"]],
+  reservations:[["product","str"],["region","str"],["qty","series"]],
+  available_supply:[["product","str"],["region","str"],["qty","series"]],
+  demand_normalized:[["product","str"],["site","str"],["qty","series"]],
+  demand_by_region:[["product","str"],["region","str"],["qty","series"]],
   fit_result:[["product","str"],["region","str"],["demand","series"],["available","series"],["fitted","series"]],
   shortfall_by_region:[["product","str"],["region","str"],["short","series"]],
   fit_summary:[["product","str"],["demand","num"],["fitted","num"],["regions_short","num"],["fit_pct","num"]],
@@ -567,7 +569,7 @@ function renderEditor(msg, cls){
   const tr=$("trace"); const item=(side,ws)=>`<button data-side="${side}" data-ws="${ws}" class="${S.addEdit.side===side&&S.addEdit.ws===ws?"active":""}"><span class="k ws">▤</span>${ws}<span class="ms">${addRows(side,ws).length} rows</span></button>`;
   tr.innerHTML=`<div class="grp">input rows</div>`+S.pickStarts.map(w=>item("in",w)).join("")+`<div class="grp">expected rows</div>`+S.pickEnds.map(w=>item("exp",w)).join("");
   tr.querySelectorAll("button").forEach(bn=>bn.onclick=()=>{ S.addEdit={side:bn.dataset.side, ws:bn.dataset.ws}; renderEditor(); });
-  const {side,ws}=S.addEdit; const rows=addRows(side,ws); const cols=[]; SCHEMA[ws].forEach(([k,t])=>{ if(t==="series") for(let i=0;i<W;i++) cols.push({k,t,i,label:`${k}[w${i+1}]`}); else cols.push({k,t,label:k}); });
+  const {side,ws}=S.addEdit; const rows=addRows(side,ws); const cols=[]; SCHEMA[ws].forEach(([k,t])=>{ if(t==="series") for(let i=0;i<W;i++) cols.push({k,t,i,label:sLabel(k,i)}); else cols.push({k,t,label:k}); });
   const cell=(r,ri,c)=>{ const v=c.t==="series"?r[c.k][c.i]:r[c.k]; const num=c.t!=="str"; return `<td><input id="c_${side}_${ws}_${ri}_${c.k}_${c.i??0}" class="cell ${num?"num":""}" ${num?'inputmode="numeric"':''} data-r="${ri}" data-k="${c.k}" data-t="${c.t}" ${c.i!=null?`data-i="${c.i}"`:""} value="${esc(v)}"></td>`; };
   $("tablewrap").innerHTML=`<p class="cap"><b>${ws}</b> · ${side==="in"?"input rows for this test":"rows the test expects at the end"}</p>
     <table class="data edit"><thead><tr>${cols.map(c=>`<th class="${c.t!=="str"?"num":""}">${esc(c.label)}</th>`).join("")}<th></th></tr></thead>

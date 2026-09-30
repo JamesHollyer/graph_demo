@@ -96,6 +96,7 @@ th{text-align:left;font-weight:500;color:var(--muted);border-bottom:2px solid va
 td{padding:10px 14px 10px 0;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.3}
 td.mono,th.mono{font-family:var(--mono);font-size:22px}
 td.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono)}
+th.num{text-align:right}
 .foot{margin-top:auto;font-size:22px;color:var(--muted)}
 .links{font-family:var(--mono);font-size:19px;color:var(--faint)}
 .links a{color:var(--blue);text-decoration:none;border-bottom:1px solid currentColor}
@@ -246,12 +247,11 @@ const SECTIONS = [
 
 { id:"engine", n:"2", title:"The engine", cx:-5200, cy:-300, cols:2, cards:[
   {html:`<div class="eyebrow">2 · the engine · Delos</div><h2>Worksets: time series with a schema</h2>
-    <div class="cols c21"><div>
-    <table><tr><th class="mono">product</th><th class="mono">region</th><th class="mono num">wk1</th><th class="mono num">wk2</th><th class="mono num">wk3</th><th class="mono num">wk4</th></tr>
+    <table><tr><th class="mono">product</th><th class="mono">region</th><th class="mono num">2026-10-05</th><th class="mono num">2026-10-12</th><th class="mono num">2026-10-19</th><th class="mono num">2026-10-26</th></tr>
     <tr><td class="mono">cpu-gen4</td><td class="mono">us-east1</td><td class="num">1200</td><td class="num">1400</td><td class="num">1600</td><td class="num">1800</td></tr>
     <tr><td class="mono">gpu-x8</td><td class="mono">us-west2</td><td class="num">64</td><td class="num">64</td><td class="num">96</td><td class="num">128</td></tr>
-    <tr><td class="mono">cpu-gen4-hm</td><td class="mono">eu-west1</td><td class="num">300</td><td class="num">300</td><td class="num">300</td><td class="num">300</td></tr></table></div>
-    <ul><li><b>Named dimensions</b> describe each row: what, where.</li><li><b>One series per row</b>: quantity over time.</li><li>The schema is the contract between steps.</li></ul></div>
+    <tr><td class="mono">cpu-gen4-hm</td><td class="mono">eu-west1</td><td class="num">300</td><td class="num">300</td><td class="num">300</td><td class="num">300</td></tr></table>
+    <ul><li><b>Named dimensions</b> describe each row: what, where.</li><li><b>One series per row:</b> a value at each timestamp.</li><li>The schema is the contract between steps.</li></ul>
     <p class="foot">Illustrative data. Real worksets hold thousands of rows.</p>`},
   {html:`<div class="eyebrow">2 · the engine · Delos</div><h2>Process nodes turn worksets into worksets</h2>
     <div class="flow" style="margin:10px 0"><span class="box amber">demand_by_region</span><span class="box amber">available_supply</span><span class="arrow">→</span><span class="box blue">fit</span><span class="arrow">→</span><span class="box amber">fit_result</span></div>
