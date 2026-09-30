@@ -97,6 +97,9 @@ td{padding:10px 14px 10px 0;border-bottom:1px solid var(--line);vertical-align:t
 td.mono,th.mono{font-family:var(--mono);font-size:22px}
 td.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono)}
 .foot{margin-top:auto;font-size:22px;color:var(--muted)}
+.links{font-family:var(--mono);font-size:19px;color:var(--faint)}
+.links a{color:var(--blue);text-decoration:none;border-bottom:1px solid currentColor}
+.foot+.links{margin-top:-8px}
 .ph{margin:0;border-radius:14px;overflow:hidden;background:var(--card2);border:1px solid var(--line);position:relative}
 .ph img{width:100%;height:100%;object-fit:contain;display:block}
 .ph.l{aspect-ratio:4/3}.ph.p{aspect-ratio:3/4}
@@ -210,7 +213,7 @@ const SECTIONS = [
   {html:`<div class="eyebrow"><b>Firefly Aerospace</b> · onsite · software engineering</div>
     <h1>Fit checks on&nbsp;demand</h1>
     <p class="lead">Two projects on the same engine, and the moment they clicked together.</p>
-    <div class="foot">James Hollyer &nbsp;·&nbsp; <span class="mono">→ to begin · O for the map · ? for keys</span></div>`}
+    <div class="foot">James Hollyer &nbsp;·&nbsp; <span class="mono">→ to begin · O for the map · ? for keys</span></div><div class="links">Online: <a href="https://jameshollyer.github.io/graph_demo/deck/" target="_blank" rel="noopener">jameshollyer.github.io/graph_demo/deck</a> &nbsp;·&nbsp; Demo: <a href="https://jameshollyer.github.io/graph_demo/" target="_blank" rel="noopener">jameshollyer.github.io/graph_demo</a></div>`}
 ]},
 
 { id:"about", n:"1", title:"About me", cx:-5200, cy:-2600, cols:2, cards:[
@@ -393,7 +396,7 @@ const SECTIONS = [
   {html:`<div class="eyebrow">7 · why firefly</div><h2>Why this company</h2>
     <ul><li><b>The right size.</b> Not the headline company. Small enough that one engineer's decisions show up in the outcome, which is exactly what this talk was about.</li><li><b>Doing the amazing thing anyway.</b> First fully successful commercial soft landing on the Moon. More lunar missions on the manifest, and a Mars mission on the way.</li><li><b>A small flight-software group with real ownership</b> over high-reliability code. That's the room I want to be in.</li></ul>
     <p class="big" style="margin-top:auto">Humanity is going back to the Moon and on to Mars. I want to be part of that push.</p>`},
-  {html:`<div class="eyebrow">that's the talk</div><h1 style="font-size:96px">Thank you.<br>Questions?</h1><p class="lead">Press O for the map and point me anywhere.</p><div class="foot">James Hollyer &nbsp;·&nbsp; j.c.hollyer@gmail.com</div>`},
+  {html:`<div class="eyebrow">that's the talk</div><h1 style="font-size:96px">Thank you.<br>Questions?</h1><p class="lead">Press O for the map and point me anywhere.</p><div class="foot">James Hollyer &nbsp;·&nbsp; j.c.hollyer@gmail.com</div><div class="links">Online: <a href="https://jameshollyer.github.io/graph_demo/deck/" target="_blank" rel="noopener">jameshollyer.github.io/graph_demo/deck</a> &nbsp;·&nbsp; Demo: <a href="https://jameshollyer.github.io/graph_demo/" target="_blank" rel="noopener">jameshollyer.github.io/graph_demo</a></div>`},
 ]},
 ];
 
